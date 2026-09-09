@@ -1,0 +1,17 @@
+# Dependencias
+node_modules/
+
+# Secretos - NUNCA subir
+.env
+.env.local
+*.pem
+tokens.json
+
+# Logs y basura
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+
+# Salidas de pruebas
+test/salidas/

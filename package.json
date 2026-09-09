@@ -1,0 +1,22 @@
+{
+  "name": "agendabot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Convierte mensajes de WhatsApp en texto libre en eventos de calendario",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "extraer": "node src/extractor.js",
+    "test": "node test/probar.js",
+    "calendario": "node src/calendar.js",
+    "agendar": "node src/agendar.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.121.0",
+    "dotenv": "^17.4.2",
+    "tsdav": "^2.3.2"
+  }
+}
