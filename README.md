@@ -147,6 +147,7 @@ un ID interno de Meta.
 | `README.md` | El presente: cómo es el sistema hoy. |
 | `TODO.md` | El futuro: lo que falta. |
 | `DECISIONS.md` | El porqué: las decisiones tomadas y lo que se descartó. |
+| `CLAUDE.md` | Cómo se trabaja aquí (reglas para Claude Code). |
 
 ## Estructura
 
@@ -162,7 +163,7 @@ agendabot/
 │   ├── casos.js          mensajes de ejemplo + resultado esperado
 │   └── probar.js         corre los casos y reporta qué falló
 ├── .env.example
-├── README.md · TODO.md · DECISIONS.md
+├── README.md · TODO.md · DECISIONS.md · CLAUDE.md
 ├── .gitignore
 └── package.json
 ```
