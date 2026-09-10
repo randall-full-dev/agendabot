@@ -177,11 +177,25 @@ cliente. Que es además lo que la persona quiso decir con "junta a las 10".
 alimenta la pregunta de confirmación de la Fase 3, no el calendario. Al evento ya
 creado nadie le sirve saber que hubo una duda.
 
-### Fase 3 — Entrada por WhatsApp
+### Fase 3 — Entrada por WhatsApp (Meta Cloud API)
 
-- [ ] Configurar WhatsApp (Meta Cloud API o Baileys) para recibir mensajes en un webhook.
-- [ ] Conectar el webhook al pipeline de Fases 1-2.
-- [ ] Respuesta de confirmación al usuario por el mismo chat.
+Se eligió la vía oficial (Meta Cloud API) sobre Baileys: cero riesgo de
+suspensión del número y estable, a cambio de un trámite inicial en
+developers.facebook.com y de que el bot viva en un chat propio.
+
+- [x] Servidor webhook que recibe los mensajes (`src/index.js` + `src/whatsapp.js`):
+      verificación del webhook, firma HMAC de cada POST, deduplicación de
+      reintentos y lista de números permitidos.
+- [x] Conectar el webhook al pipeline de Fases 1-2 (probado en local simulando
+      los POST de Meta: mensaje falso → evento real en iCloud).
+- [x] Lógica de confirmación: confianza alta agenda directo; media/baja
+      pregunta la duda y espera un "si" por el mismo chat.
+- [ ] Crear la app en developers.facebook.com y llenar las variables `WHATSAPP_*`.
+- [ ] Probar con mensajes reales desde un teléfono (requiere Fase 4 o un túnel local).
+
+```bash
+npm start    # levanta el servidor en http://localhost:3000/webhook
+```
 
 ### Fase 4 — Despliegue
 
@@ -239,8 +253,8 @@ agendabot/
 │   ├── extractor.js      # Fase 1: texto → JSON (Claude, salida estructurada)
 │   ├── calendar.js       # Fase 2: JSON → evento en iCloud (CalDAV)
 │   ├── agendar.js        # Fases 1+2 conectadas: texto → evento  ✓
-│   ├── whatsapp.js       # Fase 3: webhook y respuestas
-│   └── index.js          # Servidor principal
+│   ├── whatsapp.js       # Fase 3: el idioma de Meta (webhook, firmas, envios)
+│   └── index.js          # Servidor principal: webhook → extractor → calendario
 ├── test/
 │   ├── casos.js          # Mensajes de ejemplo + resultado esperado
 │   └── probar.js         # Corre los casos y reporta qué campos fallaron

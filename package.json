@@ -11,7 +11,8 @@
     "extraer": "node src/extractor.js",
     "test": "node test/probar.js",
     "calendario": "node src/calendar.js",
-    "agendar": "node src/agendar.js"
+    "agendar": "node src/agendar.js",
+    "start": "node src/index.js"
   },
   "license": "MIT",
   "dependencies": {
