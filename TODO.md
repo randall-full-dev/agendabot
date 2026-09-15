@@ -9,35 +9,41 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-10**
+Última revisión: **2026-09-15**
 
 ---
 
-## Fase 4 — Despliegue (lo siguiente)
+## Fase 4 — Que corra 24/7
 
-Subir el servidor a un hosting para que corra 24/7. Resuelve de un golpe los tres
-dolores que hoy son manuales y frágiles (ver abajo).
+Va en dos tiempos: primero un piloto autoalojado sin costo, para poder presentar el
+producto; el hosting de pago solo después, cuando haya aprobación. El porqué de ese
+orden está en `DECISIONS.md` (2026-09-15).
 
-- [ ] Elegir hosting (Railway o Render; deploy automático desde GitHub).
+### 4a · Piloto autoalojado (lo siguiente)
+
+- [ ] **URL pública fija** con Tailscale Funnel (plan Personal, gratis) en vez del
+      túnel efímero de `cloudflared`. Hoy el webhook de Meta apunta a una URL
+      `*.trycloudflare.com` que ya está muerta.
+- [ ] **Arranque automático** del servidor al encender la máquina (Programador de
+      tareas o NSSM), para que sobreviva a un reinicio.
+- [ ] Prueba de punta a punta desde el teléfono contra esa URL fija.
+
+### 4b · Hosting de pago (cuando aprueben)
+
+- [ ] Contratar Railway Hobby ($5/mes). Alternativa: Render Starter ($7/mes).
 - [ ] Configurar las variables de entorno en producción.
-- [ ] Prueba de punta a punta desde el teléfono contra el servidor desplegado.
+- [ ] Apuntar el webhook de Meta a la URL nueva y probar de punta a punta.
 
-### Los tres dolores que la Fase 4 elimina
+### Los dos dolores que siguen vivos
 
-Hoy, para probar en local, hace falta repetir esto a mano cada vez:
-
-1. **El token de WhatsApp caduca cada pocas horas.** El del panel de pruebas es
-   temporal. En producción hay que usar un **token de "usuario del sistema"**, que no
-   expira.
-2. **La URL del túnel cambia en cada reinicio.** Se usa `cloudflared` (ya instalado en
+1. **La URL del túnel cambia en cada reinicio.** Se usa `cloudflared` (ya instalado en
    la máquina) para exponer `localhost:3000`; su URL `*.trycloudflare.com` es distinta
-   cada vez y hay que re-pegarla en el webhook del panel de Meta. En producción será
-   una URL fija.
-3. **Servidor y túnel solo viven mientras la computadora esté encendida.**
+   cada vez y hay que re-pegarla en el webhook del panel de Meta. Lo resuelve 4a.
+2. **Servidor y túnel solo viven mientras la computadora esté encendida.** Lo resuelve
+   4b; 4a solo lo amortigua con el arranque automático.
 
-Mientras no haya Fase 4, el ciclo de prueba local es: `node src/index.js` + levantar
-el túnel, pegar la URL en el webhook de Meta, suscribir el campo `messages`, y
-regenerar el token en el `.env`.
+Mientras no esté 4a, el ciclo de prueba local es: `node src/index.js` + levantar el
+túnel, pegar la URL en el webhook de Meta y suscribir el campo `messages`.
 
 ---
 
@@ -50,6 +56,9 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
 - [ ] **Cuenta de Apple del jefe:** que genere él su contraseña específica de app y
       pase solo esos 16 caracteres. Ver `DECISIONS.md` (2026-09-08).
 - [ ] **Calendario destino real** en vez de `agendabot-pruebas`.
+- [ ] **Dónde viven las credenciales durante el piloto.** Hoy el `.env` —con el token
+      permanente de WhatsApp y la contraseña de app de Apple— está en una máquina
+      personal. Si el piloto se alarga, es tema suyo.
 
 ---
 

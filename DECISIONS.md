@@ -125,3 +125,58 @@ escribe en el evento de iCloud.
 
 **Por qué.** Al evento ya creado no le sirve a nadie saber que hubo una duda al
 capturarlo. Es material para la conversación, no para el calendario.
+
+## 2026-09-15 · Token de WhatsApp: usuario del sistema, sin caducidad
+
+**Contexto.** El token del panel de pruebas de Meta caduca cada pocas horas. Estaba
+anotado como uno de los tres dolores que resolvería el despliegue (Fase 4).
+
+**Decisión.** Un **usuario del sistema** (`agendabot-servidor`, acceso Admin) en el
+portfolio comercial, con la app `agendabot` y la WABA asignadas con **Acceso total**, y
+un token de caducidad **Nunca** con los permisos `whatsapp_business_messaging` y
+`whatsapp_business_management`.
+
+**Por qué.** No era un problema de hosting: se arregla igual en local que en producción,
+y no dependía de ninguna otra decisión. Tenerlo resuelto antes quita ruido de todo lo
+que venga después — un 401 ya no es "seguro caducó otra vez".
+
+**Detalles que costaron.** El permiso `business_management` que pide la guía de Meta no
+aparece en el selector: solo se ofrecen los permisos de los casos de uso configurados en
+la app. Con los dos de WhatsApp basta, porque agendabot no administra el portfolio. Y en
+el panel nuevo de Business Suite, el "Acceso total" que se ve en la cuenta de WhatsApp
+puede ser el del usuario *personal*: la comprobación buena es que el usuario del sistema
+diga "puede acceder a 2 activos comerciales".
+
+**Contrapartida aceptada.** Meta recomienda 60 días. Un token que no expira, si se
+filtra, sigue sirviendo hasta revocarlo a mano desde "Revocar tokens".
+
+## 2026-09-15 · Piloto autoalojado antes del hosting de pago
+
+**Contexto.** El despliegue cuesta ~$5-7 al mes, y eso hay que presentarlo a los
+superiores del usuario. Pedir presupuesto para algo que todavía no han visto funcionar
+es el orden equivocado.
+
+**Decisión.** Primero un piloto sin costo sobre una máquina propia: token permanente
+(arriba), URL pública fija con **Tailscale Funnel** y arranque automático al encender.
+El hosting de pago se contrata cuando haya aprobación, y entonces será **Railway Hobby**
+($5/mes).
+
+**Por qué Railway para después.** El uso real de agendabot (~120-200 MB de RAM, CPU casi
+nula) cabe dentro de los $5 de crédito que el plan Hobby ya incluye, y no se duerme: su
+modo Serverless es opt-in. Render Starter ($7/mes) hace lo mismo con precio plano; es la
+alternativa si se prefiere no mirar un medidor de consumo.
+
+**Descartado.**
+- **Free tier de Render:** se suspende a los 15 minutos sin tráfico y tarda cerca de un
+  minuto en despertar. Para un webhook que recibe tres mensajes al día, eso significa
+  arranque en frío en casi todos.
+- **Plan Free de Railway:** $1/mes de crédito no cubre un servicio encendido todo el mes
+  (RAM a $10/GB/mes).
+- **ngrok:** su free tier se recortó a principios de 2026 a sesiones de 2 horas y URLs
+  aleatorias. Ya no resuelve el problema de la URL fija.
+- **Cloudflare Tunnel con nombre:** funciona y `cloudflared` ya está instalado, pero
+  exige un dominio propio (~$10-12/año), o sea deja de ser costo cero.
+- **Oracle Cloud Always Free:** una VM 24/7 de verdad y gratis, pero en junio de 2026
+  Oracle recortó el Always Free de ARM a la mitad sin avisar y empezó a terminar
+  instancias que excedían el nuevo límite. Para una demo ante los jefes, el riesgo de
+  que un tercero apague la máquina el día equivocado no compensa.
