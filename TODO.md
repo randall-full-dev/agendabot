@@ -21,12 +21,9 @@ orden está en `DECISIONS.md` (2026-09-15).
 
 ### 4a · Piloto autoalojado (lo siguiente)
 
-- [ ] **URL pública fija** con Tailscale Funnel (plan Personal, gratis) en vez del
-      túnel efímero de `cloudflared`. Hoy el webhook de Meta apunta a una URL
-      `*.trycloudflare.com` que ya está muerta.
 - [ ] **Arranque automático** del servidor al encender la máquina (Programador de
-      tareas o NSSM), para que sobreviva a un reinicio.
-- [ ] Prueba de punta a punta desde el teléfono contra esa URL fija.
+      tareas o NSSM), para que sobreviva a un reinicio. La URL ya es fija y el
+      webhook ya apunta ahí; el servidor es lo único que todavía se arranca a mano.
 
 ### 4b · Hosting de pago (cuando aprueben)
 
@@ -34,16 +31,13 @@ orden está en `DECISIONS.md` (2026-09-15).
 - [ ] Configurar las variables de entorno en producción.
 - [ ] Apuntar el webhook de Meta a la URL nueva y probar de punta a punta.
 
-### Los dos dolores que siguen vivos
+### El dolor que sigue vivo
 
-1. **La URL del túnel cambia en cada reinicio.** Se usa `cloudflared` (ya instalado en
-   la máquina) para exponer `localhost:3000`; su URL `*.trycloudflare.com` es distinta
-   cada vez y hay que re-pegarla en el webhook del panel de Meta. Lo resuelve 4a.
-2. **Servidor y túnel solo viven mientras la computadora esté encendida.** Lo resuelve
-   4b; 4a solo lo amortigua con el arranque automático.
-
-Mientras no esté 4a, el ciclo de prueba local es: `node src/index.js` + levantar el
-túnel, pegar la URL en el webhook de Meta y suscribir el campo `messages`.
+**El servidor solo vive mientras la computadora esté encendida y alguien lo
+arranque.** El arranque automático de 4a lo amortigua; lo resuelve del todo 4b.
+La URL pública ya es fija (`https://rm-lap-03.tail65c817.ts.net/webhook`, Tailscale
+Funnel persistente) y el webhook de Meta apunta ahí, verificado y probado de punta a
+punta el 2026-09-15.
 
 ---
 

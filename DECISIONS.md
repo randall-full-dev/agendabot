@@ -180,3 +180,24 @@ alternativa si se prefiere no mirar un medidor de consumo.
   Oracle recortó el Always Free de ARM a la mitad sin avisar y empezó a terminar
   instancias que excedían el nuevo límite. Para una demo ante los jefes, el riesgo de
   que un tercero apague la máquina el día equivocado no compensa.
+
+## 2026-09-15 · URL pública fija: Tailscale Funnel
+
+**Contexto.** El quick tunnel de `cloudflared` da una URL distinta en cada arranque y
+había que re-pegarla en el panel de Meta cada vez. Segundo dolor del ciclo local.
+
+**Decisión.** **Tailscale Funnel** (plan Personal, gratis) exponiendo el puerto 3000.
+La URL queda fija: `https://rm-lap-03.tail65c817.ts.net/webhook`, con HTTPS y
+certificado automáticos. Corre con `tailscale funnel --bg 3000`, que persiste como
+configuración del servicio de Windows (arranque automático), así que sobrevive
+reinicios. El webhook de Meta apunta ahí, verificado y probado de punta a punta.
+
+**Por qué.** Gratis, URL estable pensada justo para webhooks, y el servicio de
+Tailscale revive solo al encender la máquina. La superficie expuesta es pequeña:
+`src/index.js` solo responde en `/webhook` y descarta POSTs sin firma válida de Meta.
+
+**Descartado.** El quick tunnel de `cloudflared` (URL efímera, el dolor original);
+ngrok (free tier recortado en 2026: sesiones de 2h y URLs aleatorias); Cloudflare
+Tunnel con nombre (exige dominio propio, ~$10-12/año). El detalle de la tailnet: es
+la cuenta de GitHub `randall-full-dev`, aceptado para el piloto — si esto pasa a la
+empresa, la tailnet debería ser suya, no personal.
