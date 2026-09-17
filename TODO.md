@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-15**
+Última revisión: **2026-09-16**
 
 ---
 
@@ -17,27 +17,29 @@
 
 Va en dos tiempos: primero un piloto autoalojado sin costo, para poder presentar el
 producto; el hosting de pago solo después, cuando haya aprobación. El porqué de ese
-orden está en `DECISIONS.md` (2026-09-15).
-
-### 4a · Piloto autoalojado (lo siguiente)
-
-- [ ] **Arranque automático** del servidor al encender la máquina (Programador de
-      tareas o NSSM), para que sobreviva a un reinicio. La URL ya es fija y el
-      webhook ya apunta ahí; el servidor es lo único que todavía se arranca a mano.
+orden está en `DECISIONS.md` (2026-09-15). **El piloto (4a) ya está completo:**
+token permanente, URL fija y arranque automático — la máquina revive sola tras un
+reinicio.
 
 ### 4b · Hosting de pago (cuando aprueben)
 
+- [ ] **Auditoría de seguridad antes de desplegar** al servidor rentado: revisar qué
+      queda expuesto, cómo viajan y se guardan las credenciales, y la validación de
+      firma del webhook, para no llevarse problemas al entorno de pago.
 - [ ] Contratar Railway Hobby ($5/mes). Alternativa: Render Starter ($7/mes).
 - [ ] Configurar las variables de entorno en producción.
 - [ ] Apuntar el webhook de Meta a la URL nueva y probar de punta a punta.
+- [ ] **Desmontar el servidor local** una vez que el hosting funcione: quitar el
+      Tailscale Funnel, el arranque automático de 4a y cualquier otra cosa expuesta
+      en la máquina personal. Si ya no se ocupa, no debe quedar nada abierto.
 
 ### El dolor que sigue vivo
 
-**El servidor solo vive mientras la computadora esté encendida y alguien lo
-arranque.** El arranque automático de 4a lo amortigua; lo resuelve del todo 4b.
-La URL pública ya es fija (`https://rm-lap-03.tail65c817.ts.net/webhook`, Tailscale
-Funnel persistente) y el webhook de Meta apunta ahí, verificado y probado de punta a
-punta el 2026-09-15.
+**El servidor solo vive mientras la computadora esté encendida y con sesión
+iniciada.** El piloto lo amortigua (todo revive solo al iniciar sesión); lo resuelve
+del todo el hosting de 4b. Detalle: si Windows reinicia solo y se queda en la
+pantalla de bloqueo, el bot no corre hasta que alguien entre — ver `DECISIONS.md`
+(2026-09-16).
 
 ---
 
@@ -45,6 +47,11 @@ punta el 2026-09-15.
 
 Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas:
 
+- [ ] **Cotización completa: servidor + consumo de API.** Si se aprueba, presentar no
+      solo el hosting (~$5/mes) sino también el costo del modelo por mensaje (~1¢ con
+      Sonnet, ver `DECISIONS.md` 2026-08-27) y quién paga esa cuenta: hoy el consumo
+      sale de la cuenta personal de Anthropic del usuario, y eso debe pasar a una
+      cuenta de la empresa.
 - [ ] **Número de WhatsApp real** en vez del número de pruebas de Meta. Implica
       decidir si el bot vive en su chat propio o en otro flujo.
 - [ ] **Cuenta de Apple del jefe:** que genere él su contraseña específica de app y

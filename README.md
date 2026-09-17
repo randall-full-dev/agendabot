@@ -12,9 +12,12 @@ y aparece el evento en el calendario, con confirmación por el mismo chat.
 Las tres fases del pipeline funcionan y están probadas de punta a punta: un WhatsApp
 real crea el evento en iCloud y el bot responde por el chat.
 
-**Corre en local, no desplegado.** El servidor y el túnel viven mientras la
-computadora esté encendida; el token de WhatsApp de pruebas caduca cada pocas horas.
-El paso a un servidor 24/7 es la Fase 4 → `TODO.md`.
+**Corre como piloto autoalojado.** La máquina local hace de servidor: token de
+WhatsApp permanente (usuario del sistema de Meta), URL pública fija
+(`https://rm-lap-03.tail65c817.ts.net/webhook`, Tailscale Funnel) y arranque
+automático del servidor al iniciar sesión (tarea programada `agendabot-servidor`,
+ver `scripts/`). Vive mientras la computadora esté encendida; el hosting de pago
+es la Fase 4b → `TODO.md`.
 
 ## El flujo
 
@@ -99,6 +102,11 @@ npm run agendar -- "junta el viernes a las 4" # pipeline texto → evento (con -
 npm start                                    # http://localhost:3000/webhook
 ```
 
+En el día a día no hace falta `npm start`: la tarea programada `agendabot-servidor`
+lo arranca al iniciar sesión (vía `scripts/iniciar-servidor-oculto.vbs`) y escribe su
+salida en `logs/servidor.log`. `npm start` queda para desarrollo, con la tarea
+detenida antes para no chocar en el puerto.
+
 El banco de pruebas usa una fecha de referencia fija (jueves 27 de agosto de 2026,
 15:00) para que "mañana" o "el próximo martes" tengan siempre la misma respuesta
 correcta; sin ese ancla, las pruebas cambiarían de resultado cada día.
@@ -162,6 +170,9 @@ agendabot/
 ├── test/
 │   ├── casos.js          mensajes de ejemplo + resultado esperado
 │   └── probar.js         corre los casos y reporta qué falló
+├── scripts/
+│   ├── iniciar-servidor.cmd         arranca el servidor con log (tarea programada)
+│   └── iniciar-servidor-oculto.vbs  lo lanza sin ventana de consola
 ├── .env.example
 ├── README.md · TODO.md · DECISIONS.md · CLAUDE.md
 ├── .gitignore

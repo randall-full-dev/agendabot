@@ -201,3 +201,29 @@ ngrok (free tier recortado en 2026: sesiones de 2h y URLs aleatorias); Cloudflar
 Tunnel con nombre (exige dominio propio, ~$10-12/año). El detalle de la tailnet: es
 la cuenta de GitHub `randall-full-dev`, aceptado para el piloto — si esto pasa a la
 empresa, la tailnet debería ser suya, no personal.
+
+## 2026-09-16 · Arranque automático: tarea programada al iniciar sesión, no NSSM
+
+**Contexto.** Último dolor del piloto autoalojado: tras un reinicio, Tailscale y el
+túnel revivían solos pero el servidor Node había que arrancarlo a mano.
+
+**Decisión.** Tarea programada `agendabot-servidor` (Programador de tareas de
+Windows), disparada al iniciar sesión del usuario, con 3 reintentos si el proceso
+muere. Lanza `scripts/iniciar-servidor-oculto.vbs`, que a su vez corre
+`scripts/iniciar-servidor.cmd` sin ventana; la salida queda en `logs/servidor.log`.
+
+**Por qué.** No pide permisos de administrador ni instalar nada. El `.vbs`
+intermedio existe porque un `.cmd` lanzado directo deja una consola abierta en la
+sesión, y cerrarla por accidente mata el servidor. El `.cmd` usa la ruta estable de
+node en fnm (`%APPDATA%\fnm\node-versions\...`), no la del PATH: la que fnm pone en
+el PATH es efímera y una tarea programada no la ve.
+
+**Descartado.**
+- **NSSM:** convertiría el servidor en un servicio de verdad (corre sin iniciar
+  sesión, se reinicia siempre), pero exige instalación y consola elevada. Para una
+  laptop en la que el usuario inicia sesión a diario, la tarea basta.
+- **Tarea "al arrancar el equipo" como SYSTEM:** también requiere elevación.
+
+**Contrapartida aceptada.** Si Windows reinicia solo (una actualización) y queda en
+la pantalla de bloqueo, el bot no corre hasta que alguien inicie sesión. Y la ruta
+de node está fijada a `v24.16.0`: actualizar Node con fnm implica ajustar el `.cmd`.
