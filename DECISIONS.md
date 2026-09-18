@@ -227,3 +227,36 @@ el PATH es efímera y una tarea programada no la ve.
 **Contrapartida aceptada.** Si Windows reinicia solo (una actualización) y queda en
 la pantalla de bloqueo, el bot no corre hasta que alguien inicie sesión. Y la ruta
 de node está fijada a `v24.16.0`: actualizar Node con fnm implica ajustar el `.cmd`.
+
+## 2026-09-17 · Puerto propio 3100 (revisa el 3000 del 2026-09-16)
+
+**Contexto.** El piloto se cayó en silencio. La tarea programada arrancó bien a las
+10:04 y atendió mensajes, pero a las 11:26 el servidor murió sin dejar error en
+`logs/servidor.log`; un segundo después arrancaba el backend de `control-de-obra` en
+el 3000. Otra sesión de trabajo mató a agendabot para quedarse con el puerto. El
+Funnel siguió publicando la URL pública hacia el 3000, o sea apuntando al repo
+equivocado: el webhook de WhatsApp quedó contestando otra aplicación.
+
+**Decisión.** agendabot escucha en el **3100** (`PORT=3100` en el `.env`) y el Funnel
+apunta ahí (`tailscale funnel --bg 3100`). El default del código sigue siendo 3000,
+porque en hosting la plataforma inyecta el puerto.
+
+**Por qué.** El 3000 es la convención de los repos de `control-de-obra` y agendabot
+llegó después a una laptop que ya lo usaba a diario. Un servicio que debe estar
+siempre arriba no puede compartir puerto con servidores de desarrollo que se levantan
+y se bajan todo el día: la colisión no es un accidente, es rutina. La URL pública no
+cambia, así que no hay nada que reconfigurar en el panel de Meta.
+
+**Descartado.**
+- **Dejar el 3000 y coordinar a mano** (bajar agendabot antes de trabajar en otro
+  repo): depende de acordarse, y el modo de fallo es el peor posible — el bot
+  silencioso y el webhook contestando otra app, sin señal de que algo va mal.
+- **Reservar el 3000 para agendabot y mover `control-de-obra`:** son varios repos con
+  el puerto en su documentación y su `.env`; mover el que llegó último cuesta menos.
+
+**Hallazgo colateral (no resuelto).** Los "3 reintentos si el proceso muere" de la
+entrada anterior no protegen nada: el `.vbs` lanza el `.cmd` y sale de inmediato, así
+que Windows da la tarea por terminada con éxito en el primer segundo y el reinicio
+vigila a `wscript.exe`, no al servidor. Si el servidor muere, nadie lo revive hasta el
+siguiente inicio de sesión. Queda en `TODO.md`; con hosting (4b) el problema
+desaparece solo, así que no vale arreglarlo dos veces.

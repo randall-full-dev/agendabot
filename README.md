@@ -99,13 +99,19 @@ npm run calendario -- --probar               # crea un evento de prueba
 npm run agendar -- "junta el viernes a las 4" # pipeline texto → evento (con --si fuerza)
 
 # Servidor de WhatsApp (Fase 3)
-npm start                                    # http://localhost:3000/webhook
+npm start                                    # http://localhost:3100/webhook
 ```
 
 En el día a día no hace falta `npm start`: la tarea programada `agendabot-servidor`
 lo arranca al iniciar sesión (vía `scripts/iniciar-servidor-oculto.vbs`) y escribe su
 salida en `logs/servidor.log`. `npm start` queda para desarrollo, con la tarea
 detenida antes para no chocar en el puerto.
+
+El servidor escucha en el **3100** (`PORT` en el `.env`), no en el 3000: los repos
+de `control-de-obra` usan el 3000 y se pisaban — quien arrancara segundo perdía, y
+si alguien mataba a agendabot para liberar el puerto, se quedaba caído sin dejar
+rastro en el log hasta el siguiente inicio de sesión. El Funnel apunta al 3100 y la
+URL pública no cambió, así que en Meta no hay nada que tocar.
 
 El banco de pruebas usa una fecha de referencia fija (jueves 27 de agosto de 2026,
 15:00) para que "mañana" o "el próximo martes" tengan siempre la misma respuesta
@@ -140,7 +146,7 @@ WHATSAPP_APP_SECRET=          # firma cada webhook; descarta POST que no sean de
 WHATSAPP_ALLOWED_NUMBERS=     # wa_id separados por coma; vacío = cualquiera
 
 TZ=America/Mexico_City
-PORT=                         # opcional, default 3000
+PORT=                         # 3100 en este equipo; default 3000 si se omite
 ```
 
 Dos trampas: `APPLE_APP_PASSWORD` no es la contraseña del Apple ID (se genera en

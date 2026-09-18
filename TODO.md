@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-16**
+Última revisión: **2026-09-17**
 
 ---
 
@@ -40,6 +40,18 @@ iniciada.** El piloto lo amortigua (todo revive solo al iniciar sesión); lo res
 del todo el hosting de 4b. Detalle: si Windows reinicia solo y se queda en la
 pantalla de bloqueo, el bot no corre hasta que alguien entre — ver `DECISIONS.md`
 (2026-09-16).
+
+- [ ] **Nadie vigila al servidor mientras corre.** Los 3 reintentos de la tarea
+      programada no sirven: el `.vbs` sale de inmediato, Windows da la tarea por
+      terminada con éxito y el reinicio vigila a `wscript.exe`, no al servidor. Si el
+      proceso muere a media mañana, queda caído hasta el siguiente inicio de sesión
+      — y en silencio: el log no registra la muerte. Pasó el 2026-09-17 (ver
+      `DECISIONS.md`). Se resuelve solo con el hosting de 4b, así que arreglarlo aquí
+      es trabajo que se tira; vale la pena solo si el piloto se alarga.
+- [ ] **No hay forma de saber si el bot está vivo sin revisarlo a mano.** Relacionado
+      con lo de arriba: el síntoma de que algo falle es que los mensajes de WhatsApp
+      dejen de contestarse, y eso se nota tarde. Una comprobación periódica del
+      webhook, o siquiera anotar en el log cada arranque y cada cierre, daría aviso.
 
 ---
 
