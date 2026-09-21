@@ -90,8 +90,9 @@ export const ESQUEMA_EVENTO = {
     notas: {
       anyOf: [{ type: "string" }, { type: "null" }],
       description:
-        "Si la confianza no es alta, que fue lo ambiguo y que habria que preguntarle al usuario. " +
-        "Una frase. null si la confianza es alta.",
+        "Si la confianza no es alta, la pregunta que hay que hacerle a quien mando el mensaje, " +
+        "dirigida a esa persona y en una sola frase, tal como la va a leer en el chat. " +
+        "null si la confianza es alta.",
     },
   },
   required: [
@@ -193,9 +194,13 @@ function promptSistema(ctx) {
     '- "media": tuviste que inferir am/pm, o el dia se dedujo del contexto.',
     '- "baja": falta la fecha, o el mensaje no describe un compromiso concreto.',
     "",
-    'Cuando la confianza no sea "alta", explica en notas y en una sola frase que fue',
-    "lo ambiguo, porque el bot usara esa nota para preguntarle al usuario antes de",
-    "crear el evento.",
+    'Cuando la confianza no sea "alta", escribe en notas la pregunta que hay que',
+    "hacerle a la persona que mando el mensaje. Ojo: la va a leer tal cual en el",
+    "chat, asi que dirigete a ella, en una sola frase, con sus acentos y sin",
+    "tecnicismos. No describas el problema: pregunta.",
+    "",
+    '  Bien: "¿Es a las 4 de la tarde o de la mañana?"',
+    '  Mal:  "El usuario no especifico si am o pm."',
     "",
     "Nunca inventes datos que el mensaje no contiene. Un campo vacio es correcto;",
     "un campo inventado rompe la agenda del usuario.",

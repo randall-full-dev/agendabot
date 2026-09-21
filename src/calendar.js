@@ -421,17 +421,23 @@ async function elegirCalendario(nombre) {
 }
 
 /**
- * Crea el evento en iCloud. Devuelve con que uid y en que calendario quedo,
- * mas el .ics que se mando (util para depurar cuando el evento sale raro).
+ * Crea el evento en iCloud. Devuelve con que uid y en que calendario quedo, que
+ * avisos le toco (en minutos antes del inicio, para que el bot pueda decirlos
+ * en el chat) y el .ics que se mando, util para depurar cuando el evento sale
+ * raro.
  */
 export async function crearEvento(evento, opciones = {}) {
-  const { nombreCalendario = CALENDARIO, zona = ZONA } = opciones;
+  const { nombreCalendario = CALENDARIO, zona = ZONA, ahora = new Date() } =
+    opciones;
 
   const cliente = await obtenerCliente();
   const calendario = await elegirCalendario(nombreCalendario);
 
   const uid = randomUUID();
-  const ics = construirICalendar(evento, { zona, uid });
+  // El mismo `ahora` para las dos llamadas: si cada una tomara el suyo, los
+  // avisos que se anuncian podrian no ser los que quedaron escritos.
+  const avisos = avisosPara(evento, zona, ahora);
+  const ics = construirICalendar(evento, { zona, uid, ahora });
 
   const respuesta = await cliente.createCalendarObject({
     calendar: calendario,
@@ -447,7 +453,7 @@ export async function crearEvento(evento, opciones = {}) {
     );
   }
 
-  return { uid, calendario: nombreDe(calendario), ics };
+  return { uid, calendario: nombreDe(calendario), avisos, ics };
 }
 
 // ---------------------------------------------------------------------------

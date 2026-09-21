@@ -82,6 +82,17 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
 
 ---
 
+## Recordatorios
+
+- [ ] **¿Suena la tercera alarma?** La app Calendario de Apple solo tiene dos ranuras
+      de alerta ("Alerta" y "Segunda alerta"). Los eventos se crean con tres —un día,
+      una hora y 15 minutos antes— y el iPhone muestra solo las dos últimas. Falta
+      saber si la de un día **suena** aunque no se vea, o si iOS la ignora. Mientras no
+      se sepa, el bot promete en el chat un aviso que quizá no exista.
+      Prueba en curso (2026-09-21): un evento para el 22 a las 16:30, cuya alarma de un
+      día cae el 21 a las 16:30; es la única que puede sonar ese día, así que aísla la
+      respuesta. Si no suena: bajar a dos alarmas y ajustar lo que dice el bot.
+
 ## Núcleo de extracción
 
 - [ ] **Casos de prueba más difíciles.** El banco de 15 ya no distingue Sonnet de

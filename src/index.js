@@ -25,6 +25,10 @@ import {
 const PUERTO = Number(process.env.PORT || 3000);
 const RUTA = "/webhook";
 
+// La misma zona que usa calendar.js: sirve para decir "hoy" y "manana" en el
+// chat sin depender de la zona del sistema.
+const ZONA = process.env.TZ || "America/Mexico_City";
+
 // Solo estos numeros pueden usar el bot (wa_id, separados por coma). Vacio =
 // cualquiera que le escriba. Para un bot de una persona, ponerlo cierra la
 // puerta a que un desconocido llene el calendario.
@@ -59,20 +63,127 @@ const ES_CONFIRMACION = /^\s*(si|sí|sale|ok|dale|va|claro|correcto|confirmo)\s*
 //  La logica de cada mensaje
 // --------------------------------------------------------------------------
 
-function describir(evento) {
-  const partes = [`"${evento.titulo}"`, evento.fecha];
+// El repo escribe el codigo y los comentarios sin acentos, pero lo que lee el
+// usuario no es codigo: ahi las tildes van completas. No cuestan nada --estas
+// frases nunca pasan por la API-- y su ausencia es de las cosas que hacen que
+// un bot suene a maquina.
+
+// Sin acento: solo se usa para indexar por getUTCDay().
+const DIAS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+const CON_TILDE = { miercoles: "miércoles", sabado: "sábado" };
+const MESES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+// El dia de hoy en la zona del calendario, no en la del sistema.
+function hoyEnZona(ahora) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: ZONA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(ahora);
+}
+
+// "2026-09-25" -> "el jueves 25 de septiembre". Hoy y manana se dicen por su
+// nombre: nadie contesta "el 21 de septiembre" cuando puede decir "hoy".
+function decirFecha(fecha, ahora) {
+  if (fecha === hoyEnZona(ahora)) return "hoy";
+  if (fecha === hoyEnZona(new Date(ahora.getTime() + 24 * 60 * 60 * 1000))) {
+    return "mañana";
+  }
+
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  const nombre = DIAS[new Date(Date.UTC(anio, mes - 1, dia)).getUTCDay()];
+  return `el ${CON_TILDE[nombre] || nombre} ${dia} de ${MESES[mes - 1]}`;
+}
+
+// "16:00" -> "4:00 p.m.". Reloj de 12 horas porque es como se lee la hora aqui.
+function decirHora(hora) {
+  const [h, m] = hora.split(":").map(Number);
+  const doce = h % 12 === 0 ? 12 : h % 12;
+  return `${doce}:${String(m).padStart(2, "0")} ${h < 12 ? "a.m." : "p.m."}`;
+}
+
+// ["a", "b", "c"] -> "a, b y c"
+function unirY(lista) {
+  if (lista.length <= 1) return lista.join("");
+  return `${lista.slice(0, -1).join(", ")} y ${lista[lista.length - 1]}`;
+}
+
+// El evento como se lee en el chat: el titulo en negritas --WhatsApp entiende
+// los asteriscos-- y debajo cuando y donde, un dato por renglon.
+function describir(evento, ahora) {
+  const lineas = [`*${evento.titulo || "Evento sin titulo"}*`];
+  const cuando = decirFecha(evento.fecha, ahora);
+
   if (evento.hora_inicio) {
-    partes.push(
+    // "a la una" en singular: "a las 1:00" no lo dice nadie.
+    const inicio = decirHora(evento.hora_inicio);
+    const articulo = inicio.startsWith("1:") ? "a la" : "a las";
+    lineas.push(
       evento.hora_fin
-        ? `de ${evento.hora_inicio} a ${evento.hora_fin}`
-        : `a las ${evento.hora_inicio}`,
+        ? `${cuando}, de ${inicio} a ${decirHora(evento.hora_fin)}`
+        : `${cuando}, ${articulo} ${inicio}`,
     );
   } else {
-    partes.push("(todo el dia)");
+    lineas.push(`${cuando}, todo el día`);
   }
-  if (evento.lugar) partes.push(`en ${evento.lugar}`);
-  return partes.join(", ");
+
+  if (evento.lugar) lineas.push(evento.lugar);
+  return lineas.join("\n");
 }
+
+/**
+ * Los avisos del evento, dichos como los diria una persona.
+ *
+ * Recibe minutos antes del inicio, tal como los devuelve crearEvento. Los de un
+ * evento de dia completo no se pueden decir asi --estan anclados a las 9:00, no
+ * a "tanto antes de la medianoche"--, por eso se traducen aparte.
+ */
+function decirAvisos(minutos, esDiaCompleto) {
+  if (minutos.length === 0) return null;
+
+  if (esDiaCompleto) {
+    const dichos = [];
+    if (minutos.includes(900)) dichos.push("la mañana anterior");
+    if (minutos.includes(-540)) dichos.push("la mañana del día");
+    // Lo que quede es el rescate de un dia completo agendado ya empezado.
+    if (dichos.length === 0) return "Te aviso en un momento.";
+    return `Te aviso ${unirY(dichos)}.`;
+  }
+
+  const dichos = minutos.map((m) => {
+    if (m % 1440 === 0) return m === 1440 ? "un día antes" : `${m / 1440} días antes`;
+    if (m % 60 === 0) return m === 60 ? "una hora antes" : `${m / 60} horas antes`;
+    return `${m} ${m === 1 ? "minuto" : "minutos"} antes`;
+  });
+  return `Te aviso ${unirY(dichos)}.`;
+}
+
+// --------------------------------------------------------------------------
+//  Lo que se contesta sin molestar al modelo
+// --------------------------------------------------------------------------
+//
+// Un saludo no es una cita, y mandarlo al extractor cuesta una llamada entera a
+// Claude para concluirlo. Estos se contestan en local: gratis y al instante.
+//
+// La lista es corta y de coincidencia exacta a proposito. Cualquier atajo mas
+// listo --"no trae numeros, entonces no es una cita"-- se come un "nos vemos
+// manana en la obra", que si lo es. Ante la duda, que se pague la llamada.
+
+const sinAcentos = (t) =>
+  t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+const ES_SALUDO =
+  /^(hola|holi|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal|que onda|saludos)$/;
+
+const ES_CORTESIA = /^(gracias|muchas gracias|mil gracias|de nada|excelente)$/;
+
+const AYUDA =
+  "Mándame una cita en un mensaje y la agendo en tu calendario.\n\n" +
+  "Por ejemplo: «Comida con Rosa el viernes a la 1 en el centro».";
 
 async function responder(mensaje) {
   const { de, texto } = mensaje;
@@ -81,33 +192,51 @@ async function responder(mensaje) {
   if (ES_CONFIRMACION.test(texto)) {
     const pendiente = pendientes.get(de);
     if (!pendiente) {
-      return "No tengo ningun evento esperando confirmacion. Mandame el mensaje de la cita y lo agendo.";
+      return "No tengo ninguna cita esperando confirmación. Mándame el mensaje y la agendo.";
     }
     pendientes.delete(de);
-    const r = await crearEvento(pendiente);
-    return `Listo, agendado en "${r.calendario}": ${describir(pendiente)}.`;
+    const ahora = new Date();
+    const r = await crearEvento(pendiente, { ahora });
+    const avisos = decirAvisos(r.avisos, !pendiente.hora_inicio);
+    return (
+      `Listo, ya la agendé.\n\n${describir(pendiente, ahora)}` +
+      (avisos ? `\n\n${avisos}` : "")
+    );
   }
+
+  // Se quita la puntuacion de los dos extremos: en español la pregunta abre
+  // con "¿", y sin eso un "¿Que tal?" se escapaba a la llamada de pago.
+  const limpio = sinAcentos(texto).replace(/^[¡¿]+|[.!?¡¿]+$/g, "").trim();
+  if (ES_SALUDO.test(limpio)) return `Hola. ${AYUDA}`;
+  if (ES_CORTESIA.test(limpio)) return "De nada.";
 
   const evento = await extraerEvento(texto);
 
   if (!evento.fecha) {
-    return (
-      "No encontre una fecha en el mensaje, asi que no agende nada." +
-      (evento.notas ? `\n${evento.notas}` : "\n¿Para que dia es?")
-    );
+    // `notas` viene redactado como una pregunta directa a quien escribio (lo
+    // pide asi el prompt del extractor) y nombra lo que falta en los terminos
+    // del propio mensaje: "¿para que dia quieres que agende la llamada al
+    // contador?" dice mas que cualquier frase fija que se pusiera aqui.
+    return evento.notas || "¿Para qué día es? Sin el día no puedo agendarla.";
   }
+
+  const ahora = new Date();
 
   if (evento.confianza !== "alta") {
     pendientes.set(de, evento);
     return (
-      `Entendi: ${describir(evento)}.` +
-      (evento.notas ? `\nPero tengo una duda: ${evento.notas}` : "") +
-      `\nResponde "si" para agendarlo asi, o mandame el mensaje corregido.`
+      `Entendí esto:\n\n${describir(evento, ahora)}` +
+      (evento.notas ? `\n\n${evento.notas}` : "") +
+      `\n\nResponde "sí" y la agendo, o mándame el mensaje corregido.`
     );
   }
 
-  const r = await crearEvento(evento);
-  return `Agendado en "${r.calendario}": ${describir(evento)}.`;
+  const r = await crearEvento(evento, { ahora });
+  const avisos = decirAvisos(r.avisos, !evento.hora_inicio);
+  return (
+    `Listo, ya la agendé.\n\n${describir(evento, ahora)}` +
+    (avisos ? `\n\n${avisos}` : "")
+  );
 }
 
 async function procesar(mensaje) {
@@ -126,7 +255,7 @@ async function procesar(mensaje) {
   } catch (error) {
     console.error(`[error] procesando mensaje de ${mensaje.de}:`, error.message);
     respuesta =
-      "Algo fallo de mi lado al procesar tu mensaje. Intentalo de nuevo en un momento.";
+      "Algo falló de mi lado al procesar tu mensaje. Inténtalo otra vez en un momento.";
   }
 
   try {

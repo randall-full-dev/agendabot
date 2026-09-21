@@ -59,8 +59,9 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 - `hora_fin`: si no se especifica, el evento dura 1 hora.
 - `lugar`: solo si el mensaje lo menciona.
 - `confianza`: `alta` | `media` | `baja`. Si no es `alta`, el bot pregunta antes de crear.
-- `notas`: cuando la confianza no es `alta`, explica en una frase qué fue ambiguo — el
-  texto que le da al bot algo concreto que preguntar. **No se escribe en el evento.**
+- `notas`: cuando la confianza no es `alta`, **la pregunta que hay que hacerle a quien
+  escribió**, redactada para que él la lea tal cual en el chat ("¿Es a las 4 de la tarde
+  o de la mañana?"). El bot la reenvía sin tocarla. **No se escribe en el evento.**
 - `fecha` y `hora_inicio` pueden venir `null`. Un campo vacío es correcto; uno
   inventado rompe la agenda.
 
@@ -72,12 +73,24 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 | `src/calendar.js` | JSON → evento CalDAV en `caldav.icloud.com`. No sabe de dónde salió el JSON. |
 | `src/agendar.js` | Conecta extractor + calendar por CLI: texto → evento, en un comando. |
 | `src/whatsapp.js` | El idioma de Meta: verificación del webhook, firma HMAC, extracción de mensajes, envío de respuestas. |
-| `src/index.js` | El servidor: webhook → extractor → calendar → respuesta. Dedup de reintentos, lista de números permitidos, regla de confianza. |
+| `src/index.js` | El servidor: webhook → extractor → calendar → respuesta. Dedup de reintentos, lista de números permitidos, regla de confianza, y cómo le habla el bot al usuario. |
 | `test/casos.js` · `test/probar.js` | 15 mensajes de ejemplo con su resultado esperado, y el banco que los corre. |
 
 **Detalle de `calendar.js`:** las horas se escriben como hora de pared con zona
 (`DTSTART;TZID=America/Mexico_City:...`), no como UTC. El porqué (un bug de la base de
 zonas de iCloud) está en `DECISIONS.md` — no deshacer sin leerlo.
+
+**Cómo habla el bot.** Las frases que lee el usuario viven en `index.js` y van con sus
+acentos: no pasan por la API, así que escribirlas bien no cuesta nada. La confirmación
+dice la fecha en palabras ("el jueves 24 de septiembre, a las 4:00 p.m.", y "hoy" o
+"mañana" cuando toca) y enumera los avisos que de verdad quedaron puestos, no una frase
+genérica. Cuando falta un dato, la pregunta la escribe el extractor en `notas` dirigida
+al usuario, y el bot la reenvía tal cual.
+
+Los saludos y agradecimientos exactos ("hola", "gracias", "¿qué tal?") se contestan en
+local, sin llamar al modelo: son gratis e instantáneos. La lista es de coincidencia
+exacta a propósito — cualquier atajo más listo se comería un "nos vemos mañana en la
+obra", que sí es una cita.
 
 **Recordatorios:** todos los eventos se crean con aviso; no hay forma de pedir uno sin
 él. Una cita con hora avisa **1 día, 1 hora y 15 minutos antes**; una de día completo,
