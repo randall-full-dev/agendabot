@@ -260,3 +260,83 @@ que Windows da la tarea por terminada con éxito en el primer segundo y el reini
 vigila a `wscript.exe`, no al servidor. Si el servidor muere, nadie lo revive hasta el
 siguiente inicio de sesión. Queda en `TODO.md`; con hosting (4b) el problema
 desaparece solo, así que no vale arreglarlo dos veces.
+
+---
+
+## 2026-09-21 · Todos los eventos llevan recordatorio, y el corto plazo tiene rescate
+
+**Contexto.** Hasta hoy el `.ics` se escribía sin ningún `VALARM`: el evento quedaba en
+el calendario y no avisaba nada. Un bot al que le dictas una cita por WhatsApp y que la
+agenda en silencio resuelve la mitad del problema — la cita queda anotada, pero igual se
+te pasa.
+
+**Decisión.** Todo evento se crea con aviso; no hay forma de pedir uno sin él.
+
+- Cita con hora: **1 día, 1 hora y 15 minutos antes**.
+- Día completo: **9:00 de la víspera y 9:00 del mismo día**. No pueden usar las mismas
+  anticipaciones porque empiezan a la medianoche, y un aviso a esa hora no lo ve nadie.
+  Las 9:00 de la víspera son además el default de Apple.
+- De esa escalera se caen los avisos que ya pasaron y los que caerían a menos de
+  **5 minutos** de haber agendado (`MARGEN_MIN`).
+- Si se cae la escalera entera, entra un **aviso de rescate**: uno solo, a la mitad del
+  tiempo que falta, con tope de 15 minutos y piso de 1.
+
+**Por qué las tres anticipaciones.** Son las que ofrece la app de Calendario de iCloud y
+cubren tres momentos distintos: el día antes para reacomodar la agenda, la hora antes
+para prepararse, los 15 minutos para salir. Que sean fijas es lo que hace que el bot
+valga la pena: se dicta "junta con el arquitecto el jueves a las 4" y no hay nada más
+que decidir. Pedir la anticipación en cada mensaje convierte una frase en una
+conversación.
+
+**Por qué el rescate.** Una alarma cuyo momento ya pasó no suena. Por aquí entra mucho
+"nos vemos en media hora", y ahí las tres nacen vencidas: el evento se quedaba mudo
+justo cuando olvidarlo cuesta más. El rescate va a la mitad del tiempo que falta y no a
+un fijo porque el tiempo que falta es el único dato que hay: con 30 minutos avisa a los
+15, con 6 avisa a los 3.
+
+**Por qué se descartan los avisos casi inmediatos.** Sin el umbral, una cita dentro de
+17 minutos conservaba la alarma de 15, que sonaba a los 2 minutos de agendar —con el
+chat del bot todavía abierto— y después ya no avisaba nada más. El umbral la descarta y
+deja que el rescate ponga una a los 9 minutos, mucho mejor colocada.
+
+**El piso del rescate es independiente del umbral, y tiene que serlo.** Al principio se
+escribió como `MARGEN_MIN * 2`, y subir el umbral a 5 dejó sin ningún aviso todo lo que
+cayera a menos de 10 minutos — el agujero que el rescate existía para tapar. No son el
+mismo concepto: el umbral descarta un aviso que sobra porque vendrán otros; el rescate
+es el último recurso, y ahí un aviso a los 3 minutos sigue siendo mejor que ninguno.
+
+**Comprobado contra iCloud, no solo contra el RFC.** Se creó un evento de cada tipo en
+`agendabot-pruebas` y se leyeron de vuelta por CalDAV: las alarmas vuelven tal cual se
+mandaron, incluido el disparo positivo `PT9H` del día completo. Importaba verificarlo:
+iCloud reescribe lo que guarda —anexa su propio `VTIMEZONE`, entre otras cosas— y no
+había garantía de que respetara un disparo posterior al inicio.
+
+**Comprobado también en el dispositivo.** Dos simulacros con el iPhone delante: lo que
+llega es una **alerta de calendario**, no una alarma de reloj. Se ve como una
+notificación normal y respeta el silencio y los modos de concentración. Eso fija el
+techo de lo que un `VALARM` puede hacer: nunca va a despertar a nadie.
+
+**Descartado.**
+- **Preguntar la anticipación en el chat**, o sacarla del mensaje con el extractor: es
+  la pregunta que el bot existe para no hacer. Además obligaría a tocar el prompt y el
+  esquema, con los 15 casos de por medio, por un dato que casi nadie va a dictar.
+- **Un solo aviso.** Elegir cuál es imposible sin saber de qué cita se trata: 15 minutos
+  no alcanzan si hay que cruzar la ciudad, y un día antes se olvida.
+- **Hacerlas configurables por `.env`.** Hoy el piloto es de un usuario y de una
+  máquina; una variable que nadie va a cambiar es ceremonia. Las constantes están al
+  principio del archivo.
+- **Sustituir el tercer aviso por un mensaje de WhatsApp del bot.** Se probó y funciona
+  —se programó un envío y Meta lo aceptó—, pero no puede sustituir a una alerta del
+  calendario, por dos razones independientes. La primera: la Cloud API solo deja mandar
+  texto libre dentro de las **24 horas** siguientes al último mensaje del usuario, así
+  que en una cita agendada el lunes para el jueves el aviso de 15 minutos cae fuera de
+  la ventana y Meta lo rechaza. La segunda: una alerta del calendario la dispara Apple y
+  suena aunque la máquina esté apagada, mientras que un mensaje del bot exige que el
+  proceso esté vivo a esa hora exacta — y hoy muere al cerrar sesión. Un recordatorio
+  que no llega es peor que no haberlo prometido. Queda para después del hosting (4b),
+  anotado en `TODO.md`, y como **añadido** a las alertas, no como reemplazo.
+
+**Consecuencia aceptada.** Los avisos vencidos no se escriben en el `.ics`. Si después
+se mueve el evento a una fecha lejana desde el teléfono, no reaparecen: se queda con los
+que se le pusieron al crearlo. Para un piloto de un usuario es un precio menor frente a
+tener la lista de alertas de la app llena de avisos que nunca van a sonar.

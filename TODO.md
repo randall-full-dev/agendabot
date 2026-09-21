@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-17**
+Última revisión: **2026-09-21**
 
 ---
 
@@ -32,6 +32,13 @@ reinicio.
 - [ ] **Desmontar el servidor local** una vez que el hosting funcione: quitar el
       Tailscale Funnel, el arranque automático de 4a y cualquier otra cosa expuesta
       en la máquina personal. Si ya no se ocupa, no debe quedar nada abierto.
+- [ ] **Recordatorio por WhatsApp, como añadido a las alertas del calendario.** El bot
+      manda un mensaje al chat además de la alerta del iPhone; probado el 2026-09-21 y
+      Meta lo aceptó. Espera al hosting por dos razones (ver `DECISIONS.md`): exige un
+      proceso vivo a la hora exacta del envío, y la Cloud API solo deja texto libre
+      dentro de las 24 h siguientes al último mensaje del usuario, así que una cita
+      agendada con días de anticipación cae fuera de la ventana. Lo segundo no lo
+      resuelve el hosting: hace falta una plantilla aprobada por Meta.
 
 ### El dolor que sigue vivo
 
@@ -88,5 +95,8 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
       necesario si el proyecto pasa de un usuario a varios: no se le puede pedir a
       mucha gente que genere contraseñas de app; ahí OAuth deja de ser opcional.
 - [ ] Editar / cancelar eventos por mensaje ("cambia la junta del viernes a las 5").
-- [ ] Recordatorios configurables.
+- [ ] **Recordatorios a la medida.** Ya todos los eventos avisan, con anticipación
+      fija (ver `DECISIONS.md`, 2026-09-21). Elegir otra anticipación desde el mensaje
+      —"avísame con dos días"— se descartó por ahora: obliga a tocar el prompt y el
+      esquema del extractor. Se retoma si alguien lo pide de verdad.
 - [ ] Soporte para notas de voz.

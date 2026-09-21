@@ -79,6 +79,27 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 (`DTSTART;TZID=America/Mexico_City:...`), no como UTC. El porqué (un bug de la base de
 zonas de iCloud) está en `DECISIONS.md` — no deshacer sin leerlo.
 
+**Recordatorios:** todos los eventos se crean con aviso; no hay forma de pedir uno sin
+él. Una cita con hora avisa **1 día, 1 hora y 15 minutos antes**; una de día completo,
+a las **9:00 del día anterior y a las 9:00 del mismo día** (a la medianoche, que es
+cuando empieza, nadie mira el teléfono). Las anticipaciones son constantes al principio
+de `calendar.js`.
+
+De esa escalera se descartan los avisos que ya pasaron y los que caerían a menos de
+cinco minutos de haber agendado: no avisan de nada —el chat con el bot sigue abierto— y
+le quitan el lugar al que sí serviría. Si así se cae la escalera entera, que es el caso
+de "nos vemos en media hora", entra un **aviso de rescate**: uno solo, a la mitad del
+tiempo que falta, con tope de quince minutos. Una cita dentro de 11 minutos avisa a los
+5; dentro de 30, a los 15. Por debajo de dos minutos ya no se pone nada, porque no
+llegaría a tiempo.
+
+Un evento de día completo agendado después de sus propias 9:00 recibe su rescate dos
+minutos más tarde, para que aparezca hoy en la pantalla y no solo en el calendario.
+
+Lo que se dispara es una **alerta de calendario**, no una alarma de reloj: en iPhone se
+ve como una notificación normal y respeta el silencio y los modos de concentración.
+Comprobado en el dispositivo, no solo en el estándar.
+
 ## Cómo correrlo
 
 ```bash

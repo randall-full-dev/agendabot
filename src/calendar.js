@@ -22,6 +22,39 @@ const CALENDARIO = process.env.ICLOUD_CALENDAR_NAME || "";
 // El README lo fija en una hora.
 const DURACION_POR_DEFECTO_MIN = 60;
 
+// Con cuanta anticipacion avisa cada evento, en minutos antes del inicio.
+// Todos los eventos llevan recordatorio: nadie agenda algo para que se le pase.
+// Un numero negativo es "despues del inicio".
+const AVISOS_CON_HORA = [1440, 60, 15]; // un dia, una hora, quince minutos
+
+// Un evento de dia completo empieza a la medianoche, y a esa hora nadie mira
+// el telefono. Sus avisos se corren a las 9:00, que es ademas lo que hace Apple
+// por defecto: 900 minutos antes de la medianoche son las 9:00 de la vispera, y
+// -540 --en negativo, o sea despues-- las 9:00 del mismo dia.
+const AVISOS_DIA_COMPLETO = [900, -540];
+
+// Un aviso de la escalera tiene que caer al menos estos minutos en el futuro
+// para valer la pena. Mas cerca que eso llega casi junto con el mensaje de
+// confirmacion del bot, cuando la persona todavia tiene el chat abierto: no
+// avisa de nada y ademas estorba, porque ocupa el lugar del aviso util que el
+// rescate habria puesto mas adelante.
+const MARGEN_MIN = 5;
+
+// El rescate tiene su propio piso, mas bajo que MARGEN_MIN a proposito: no son
+// el mismo concepto. MARGEN_MIN descarta un aviso que sobra porque vendran
+// otros; el rescate es el ultimo recurso, y ahi un aviso a los tres minutos
+// sigue siendo mejor que ninguno. Atarlos dejo sin avisar todo lo que caia a
+// menos del doble de MARGEN_MIN.
+const RESCATE_MIN_MIN = 1;
+
+// Techo del aviso de rescate (ver avisosPara).
+const RESCATE_MAX_MIN = 15;
+
+// Cuanto despues de agendar suena el rescate de un evento de dia completo que
+// ya empezo. No hay un "antes" que tenga sentido ahi: el aviso solo sirve para
+// que la cosa aparezca hoy en la pantalla.
+const RESCATE_DIA_COMPLETO_MIN = 2;
+
 // Se construye a la primera llamada, no al importar: asi el modulo se puede
 // cargar (y probar las funciones que no tocan la red) sin credenciales.
 let _cliente;
@@ -161,6 +194,114 @@ function plegar(linea) {
   return trozos.join("\r\n ");
 }
 
+// minutos antes del inicio -> duracion RFC 5545 relativa a DTSTART.
+// Ojo con los dias: van antes de la T (-P1D); -PT1D no es valido.
+function duracion(minutosAntes) {
+  const signo = minutosAntes >= 0 ? "-" : "";
+  const n = Math.abs(minutosAntes);
+  if (n === 0) return "PT0M";
+  if (n % 1440 === 0) return `${signo}P${n / 1440}D`;
+  if (n % 60 === 0) return `${signo}PT${n / 60}H`;
+  return `${signo}PT${n}M`;
+}
+
+// Cuantos minutos faltan para que empiece el evento.
+//
+// Mismo truco que marcaLocal: se comparan dos horas de pared como si ambas
+// fueran UTC. La resta sale bien sin depender de la base de zonas horarias,
+// que es justo de lo que este archivo desconfia. Un evento de dia completo
+// "empieza" a su medianoche, asi que a media manana su cuenta ya va en
+// negativo: eso es correcto y avisosPara lo aprovecha.
+function minutosHasta(fecha, hora, zona, ahora) {
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: zona,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      // h23 y no hour12:false: con hour12 algunas versiones de ICU devuelven
+      // "24" para la medianoche y la fecha se recorre un dia.
+      hourCycle: "h23",
+    })
+      .formatToParts(ahora)
+      .filter((p) => p.type !== "literal")
+      .map((p) => [p.type, Number(p.value)]),
+  );
+
+  const ahoraPared = Date.UTC(
+    partes.year,
+    partes.month - 1,
+    partes.day,
+    partes.hour,
+    partes.minute,
+  );
+
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  const [horas, minutos] = (hora || "00:00").split(":").map(Number);
+  const inicioPared = Date.UTC(anio, mes - 1, dia, horas, minutos);
+
+  return Math.round((inicioPared - ahoraPared) / 60000);
+}
+
+/**
+ * Que avisos lleva este evento, en minutos antes del inicio.
+ *
+ * De la escalera se caen los que ya pasaron. No es cosmetico: una alarma con
+ * hora pasada no suena, y dejarla escrita ademas ensucia la lista de alertas
+ * que la persona ve en la app.
+ *
+ * El problema es cuando se caen todas. Por aqui entra mucho "nos vemos en
+ * media hora", y ahi el evento se quedaria mudo justo cuando olvidarlo cuesta
+ * mas. Para eso esta el aviso de rescate: uno solo, a la mitad del tiempo que
+ * falta, con tope de 15 minutos. A la mitad y no a un fijo porque el tiempo
+ * que falta es el unico dato que hay: con 30 minutos avisa a los 15, con 6
+ * avisa a los 3.
+ */
+function avisosPara(evento, zona, ahora) {
+  const conHora = Boolean(evento.hora_inicio);
+  const escalera = conHora ? AVISOS_CON_HORA : AVISOS_DIA_COMPLETO;
+  const faltan = minutosHasta(evento.fecha, evento.hora_inicio, zona, ahora);
+
+  const vivos = escalera.filter((antes) => faltan - antes >= MARGEN_MIN);
+  if (vivos.length > 0) return vivos;
+
+  if (conHora) {
+    // Con un minuto o menos por delante no hay rescate que llegue a tiempo.
+    if (faltan < RESCATE_MIN_MIN * 2) return [];
+    return [
+      Math.min(
+        Math.max(Math.floor(faltan / 2), RESCATE_MIN_MIN),
+        RESCATE_MAX_MIN,
+      ),
+    ];
+  }
+
+  // Dia completo agendado despues de sus propias 9:00. Si ya se acabo el dia
+  // no hay nada que avisar; si no, suena enseguida.
+  if (faltan <= -24 * 60) return [];
+  return [faltan - RESCATE_DIA_COMPLETO_MIN];
+}
+
+// Un VALARM por cada anticipacion pedida.
+//
+// El RFC no pide UID en un VALARM, pero Apple lo escribe en los suyos y no
+// cuesta nada. Se deriva del uid del evento en vez de sortearlo: asi el mismo
+// evento produce siempre el mismo .ics, que hace la depuracion predecible.
+function bloquesDeAviso(avisos, titulo, uid) {
+  return avisos.flatMap((minutosAntes, i) => [
+    "BEGIN:VALARM",
+    `UID:${uid}-aviso-${i + 1}`,
+    "ACTION:DISPLAY",
+    `TRIGGER:${duracion(minutosAntes)}`,
+    // DESCRIPTION es obligatorio en una alarma DISPLAY: es el texto que se ve
+    // en la notificacion. El titulo del evento dice mas que "Recordatorio".
+    `DESCRIPTION:${escapar(titulo)}`,
+    "END:VALARM",
+  ]);
+}
+
 /**
  * JSON del extractor -> texto iCalendar.
  *
@@ -187,7 +328,9 @@ export function construirICalendar(evento, opciones = {}) {
     `DTSTAMP:${marcaUTC(ahora)}`,
   ];
 
-  if (evento.hora_inicio) {
+  const conHora = Boolean(evento.hora_inicio);
+
+  if (conHora) {
     const inicio = marcaLocal(evento.fecha, evento.hora_inicio);
 
     let fin;
@@ -210,7 +353,8 @@ export function construirICalendar(evento, opciones = {}) {
     );
   }
 
-  lineas.push(`SUMMARY:${escapar(evento.titulo || "Evento sin titulo")}`);
+  const titulo = evento.titulo || "Evento sin titulo";
+  lineas.push(`SUMMARY:${escapar(titulo)}`);
 
   if (evento.lugar) lineas.push(`LOCATION:${escapar(evento.lugar)}`);
   if (evento.descripcion) {
@@ -220,6 +364,9 @@ export function construirICalendar(evento, opciones = {}) {
   // `notas` a proposito no se escribe. Explica que fue lo ambiguo del mensaje,
   // y eso es material para la pregunta de confirmacion en WhatsApp, no para el
   // calendario: al evento ya creado nadie le sirve saber que hubo una duda.
+
+  // Las alarmas van dentro del VEVENT, despues de sus propiedades.
+  lineas.push(...bloquesDeAviso(avisosPara(evento, zona, ahora), titulo, uid));
 
   lineas.push("END:VEVENT", "END:VCALENDAR");
 
