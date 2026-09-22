@@ -113,6 +113,12 @@ Lo que se dispara es una **alerta de calendario**, no una alarma de reloj: en iP
 ve como una notificación normal y respeta el silencio y los modos de concentración.
 Comprobado en el dispositivo, no solo en el estándar.
 
+**El iPhone muestra solo dos de las tres alarmas, y eso es normal.** La app Calendario
+de Apple tiene dos ranuras ("Alerta" y "Segunda alerta") y dibuja las dos más cercanas;
+la de un día antes no aparece por ningún lado. Pero suena: está comprobado (ver
+`DECISIONS.md`, 2026-09-22). Es un límite de presentación, no de los datos — no hay nada
+que arreglar aquí.
+
 ## Cómo correrlo
 
 ```bash

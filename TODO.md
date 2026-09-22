@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-21**
+Última revisión: **2026-09-22**
 
 ---
 
@@ -32,13 +32,17 @@ reinicio.
 - [ ] **Desmontar el servidor local** una vez que el hosting funcione: quitar el
       Tailscale Funnel, el arranque automático de 4a y cualquier otra cosa expuesta
       en la máquina personal. Si ya no se ocupa, no debe quedar nada abierto.
-- [ ] **Recordatorio por WhatsApp, como añadido a las alertas del calendario.** El bot
-      manda un mensaje al chat además de la alerta del iPhone; probado el 2026-09-21 y
-      Meta lo aceptó. Espera al hosting por dos razones (ver `DECISIONS.md`): exige un
-      proceso vivo a la hora exacta del envío, y la Cloud API solo deja texto libre
-      dentro de las 24 h siguientes al último mensaje del usuario, así que una cita
-      agendada con días de anticipación cae fuera de la ventana. Lo segundo no lo
-      resuelve el hosting: hace falta una plantilla aprobada por Meta.
+- [ ] **Recordatorio por WhatsApp, en el aviso de una hora antes.** El bot manda un
+      mensaje al chat **además** de la alerta del iPhone, no en su lugar: el calendario
+      es el canal fiable y WhatsApp el que puede fallar. Decidido el 2026-09-22 que sea
+      el de una hora —es el momento en que todavía se puede actuar, y el que más veces
+      cae dentro de la ventana de Meta—. Si con el rodaje la alerta del calendario a esa
+      hora resulta redundante, se quita entonces, ya con evidencia.
+      Probado el 2026-09-21: se programó un envío y Meta lo aceptó. Espera al hosting
+      por dos razones (ver `DECISIONS.md`): exige un proceso vivo a la hora exacta del
+      envío, y la Cloud API solo deja texto libre dentro de las 24 h siguientes al
+      último mensaje del usuario. Lo segundo **no lo resuelve el hosting**: hace falta
+      una plantilla de utilidad aprobada por Meta.
 
 ### El dolor que sigue vivo
 
@@ -81,17 +85,6 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
       personal. Si el piloto se alarga, es tema suyo.
 
 ---
-
-## Recordatorios
-
-- [ ] **¿Suena la tercera alarma?** La app Calendario de Apple solo tiene dos ranuras
-      de alerta ("Alerta" y "Segunda alerta"). Los eventos se crean con tres —un día,
-      una hora y 15 minutos antes— y el iPhone muestra solo las dos últimas. Falta
-      saber si la de un día **suena** aunque no se vea, o si iOS la ignora. Mientras no
-      se sepa, el bot promete en el chat un aviso que quizá no exista.
-      Prueba en curso (2026-09-21): un evento para el 22 a las 16:30, cuya alarma de un
-      día cae el 21 a las 16:30; es la única que puede sonar ese día, así que aísla la
-      respuesta. Si no suena: bajar a dos alarmas y ajustar lo que dice el bot.
 
 ## Núcleo de extracción
 

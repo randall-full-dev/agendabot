@@ -340,3 +340,41 @@ techo de lo que un `VALARM` puede hacer: nunca va a despertar a nadie.
 se mueve el evento a una fecha lejana desde el teléfono, no reaparecen: se queda con los
 que se le pusieron al crearlo. Para un piloto de un usuario es un precio menor frente a
 tener la lista de alertas de la app llena de avisos que nunca van a sonar.
+
+---
+
+## 2026-09-22 · Se confirman las tres alarmas; WhatsApp irá en la de una hora
+
+**Contexto.** La entrada de ayer dejó una duda que no se podía cerrar desde el código:
+los eventos se crean con tres alarmas, pero la app Calendario de Apple solo tiene dos
+ranuras —"Alerta" y "Segunda alerta"— y muestra únicamente las dos más cercanas. No se
+sabía si la tercera, la de un día antes, existía de verdad o si iOS la descartaba al
+sincronizar. Mientras no se supiera, el bot prometía en el chat un aviso posiblemente
+inexistente.
+
+**Cómo se resolvió.** Con un truco de calendario en vez de esperar un día: se creó un
+evento para *mañana* a una hora concreta, de modo que su alarma de un día antes cayera
+*hoy* a esa misma hora. Las otras dos quedaban fuera del día, así que era la única que
+podía sonar y no había ambigüedad posible. La idea fue del usuario. Sonó las dos veces
+que se probó (21 y 22 de septiembre).
+
+**Conclusión.** La tercera alarma funciona; el límite de Apple es solo de presentación.
+Las tres anticipaciones se quedan como están. Que el iPhone muestre dos es cosmético y
+no hay que corregir nada — conviene saberlo para no volver a diagnosticarlo.
+
+**Decisión sobre WhatsApp.** Cuando llegue (Fase 4b), el mensaje del bot irá en el aviso
+de **una hora antes**, y será un **añadido** a la alerta del calendario, no un
+reemplazo.
+
+**Por qué esa hora.** Es el último momento en que el aviso sirve para actuar: salir,
+preparar lo que hay que llevar, cancelar. El de 15 minutos llega cuando ya se va en
+camino, y el de un día antes se pierde en el chat. Hay además una razón práctica: es el
+que más veces cae dentro de la ventana de 24 horas de Meta, porque en una cita agendada
+para el día siguiente el aviso de un día suele nacer vencido.
+
+**Por qué añadido y no reemplazo.** El calendario lo dispara Apple: suena con la máquina
+apagada y sin que nada nuestro esté vivo. El mensaje del bot depende de un proceso
+corriendo en el minuto exacto y de una ventana que puede estar cerrada. Cambiar el aviso
+más útil de un canal probado a uno sin rodaje es apostar de más. Si con el tiempo la
+alerta del calendario a esa hora resulta redundante, se quita **entonces**, con la
+evidencia de que el mensaje llega de forma fiable.
