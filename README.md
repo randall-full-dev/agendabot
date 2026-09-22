@@ -83,6 +83,14 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 (`DTSTART;TZID=America/Mexico_City:...`), no como UTC. El porqué (un bug de la base de
 zonas de iCloud) está en `DECISIONS.md` — no deshacer sin leerlo.
 
+**Contestar al bot.** Cuando el bot pregunta y la persona responde, esa respuesta no
+se procesa sola: `index.js` guarda el mensaje original junto al evento pendiente y le
+manda ambos al extractor. Sin eso, un "el 30" a secas no tiene título, ni hora, ni
+lugar, y producía un "Evento por confirmar" de día completo. El modelo decide si la
+respuesta corrige la cita anterior o si describe una distinta. El contexto viaja en el
+mensaje de usuario, no en el prompt del sistema, para que el banco de pruebas reciba
+exactamente lo mismo que antes.
+
 **Cómo habla el bot.** Las frases que lee el usuario viven en `index.js` y van con sus
 acentos: no pasan por la API, así que escribirlas bien no cuesta nada. La confirmación
 dice la fecha en palabras ("el jueves 24 de septiembre, a las 4:00 p.m.", y "hoy" o

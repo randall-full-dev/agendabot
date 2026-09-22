@@ -454,3 +454,41 @@ está encima.
 **Consecuencia que queda abierta.** El bot ahora pregunta en más casos, y contestarle
 sigue siendo torpe: solo entiende `sí` o el mensaje corregido completo. Un "el 30" a
 secas no se entiende. Anotado en `TODO.md`.
+
+---
+
+## 2026-09-22 · La respuesta a una pregunta del bot se lee junto al mensaje original
+
+**Qué pasó.** El mismo día en que el bot aprendió a preguntar ante una fecha ambigua,
+quedó claro que no sabía escuchar la respuesta. El bot preguntó "¿el miércoles de
+mañana, 23, o el siguiente, 30?", la persona contestó "quiero que la agendes para el
+siguiente miércoles 30" —como le contestaría a cualquiera— y el bot le propuso "Evento
+por confirmar, el miércoles 30 de septiembre, todo el día". Título, hora y lugar,
+perdidos.
+
+**La causa.** La respuesta se mandaba al extractor sola, como si fuera un mensaje nuevo.
+Y sola no es una cita: no dice de qué, ni a qué hora, ni dónde. El evento pendiente
+estaba guardado en memoria y no se usaba para nada salvo esperar un "sí".
+
+**Decisión.** Junto al evento pendiente se guarda también el texto que lo originó.
+Cuando llega un mensaje que no es un "sí" limpio y hay algo pendiente, al extractor se
+le mandan los dos —el original y la respuesta— con la instrucción de devolver el evento
+ya resuelto: lo que la respuesta aclara manda, lo que no menciona se conserva.
+
+**Que la respuesta pueda ser otra cita se deja al modelo.** "Mejor olvídalo, agenda
+comida con Rosa el viernes" no es una corrección, es una cita nueva. Distinguirlo con
+una heurística aquí sería frágil; la instrucción se lo dice al modelo y él decide.
+Comprobado: con esa frase se queda solo con la comida, sin arrastrar nada de la cita
+anterior.
+
+**El contexto va en el mensaje de usuario, no en el prompt del sistema.** Así un mensaje
+suelto —que es lo que manda el banco de pruebas— llega byte por byte como antes de que
+esto existiera, y los 16 casos no pueden moverse por este cambio. Se corrieron: 16/16.
+
+**Se guarda el intercambio completo, no el último mensaje.** Si tras la corrección la
+confianza sigue sin ser alta y hay que preguntar otra vez, la segunda respuesta necesita
+todo lo anterior; guardar solo el último mensaje volvería a perder lo entendido.
+
+**Comprobado con las tres formas naturales de contestar:** "quiero que la agendes para
+el siguiente miércoles 30", "el 30" y "no, el de la semana que entra". Las tres dan la
+misma cita completa, con su título, su hora y su lugar.

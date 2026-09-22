@@ -188,18 +188,21 @@ const AYUDA =
 async function responder(mensaje) {
   const { de, texto } = mensaje;
 
+  // Lo que quedo esperando respuesta: { evento, texto }. El texto original hace
+  // falta porque la respuesta, por si sola, casi nunca es una cita completa.
+  const pendiente = pendientes.get(de);
+
   // ¿Es el "si" a una propuesta pendiente?
   if (ES_CONFIRMACION.test(texto)) {
-    const pendiente = pendientes.get(de);
     if (!pendiente) {
       return "No tengo ninguna cita esperando confirmación. Mándame el mensaje y la agendo.";
     }
     pendientes.delete(de);
     const ahora = new Date();
-    const r = await crearEvento(pendiente, { ahora });
-    const avisos = decirAvisos(r.avisos, !pendiente.hora_inicio);
+    const r = await crearEvento(pendiente.evento, { ahora });
+    const avisos = decirAvisos(r.avisos, !pendiente.evento.hora_inicio);
     return (
-      `Listo, ya la agendé.\n\n${describir(pendiente, ahora)}` +
+      `Listo, ya la agendé.\n\n${describir(pendiente.evento, ahora)}` +
       (avisos ? `\n\n${avisos}` : "")
     );
   }
@@ -210,7 +213,16 @@ async function responder(mensaje) {
   if (ES_SALUDO.test(limpio)) return `Hola. ${AYUDA}`;
   if (ES_CORTESIA.test(limpio)) return "De nada.";
 
-  const evento = await extraerEvento(texto);
+  // Con algo pendiente, este mensaje casi siempre es la respuesta a la pregunta
+  // del bot. Mandarlo solo pierde el titulo, la hora y el lugar: un "que sea el
+  // 30" acababa produciendo un "Evento por confirmar" de dia completo. Se le
+  // manda junto con el mensaje original, y el modelo decide si lo corrige o si
+  // es una cita nueva.
+  const evento = await extraerEvento(texto, {
+    previo: pendiente
+      ? { texto: pendiente.texto, pregunta: pendiente.evento.notas }
+      : null,
+  });
 
   if (!evento.fecha) {
     // `notas` viene redactado como una pregunta directa a quien escribio (lo
@@ -223,7 +235,13 @@ async function responder(mensaje) {
   const ahora = new Date();
 
   if (evento.confianza !== "alta") {
-    pendientes.set(de, evento);
+    // Se guarda el intercambio completo, no solo el ultimo mensaje: si hay que
+    // preguntar otra vez, la segunda respuesta tiene que llegar al modelo con
+    // todo lo anterior o se vuelve a perder lo que ya se habia entendido.
+    pendientes.set(de, {
+      evento,
+      texto: pendiente ? `${pendiente.texto}\n${texto}` : texto,
+    });
     return (
       `Entendí esto:\n\n${describir(evento, ahora)}` +
       (evento.notas ? `\n\n${evento.notas}` : "") +

@@ -97,10 +97,11 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
       buenos salen de mensajes reales: así entró el caso 16, de una cita que se agendó
       con una semana de error (ver `DECISIONS.md`, 2026-09-22). Seguir sumándolos.
 
-- [ ] **Contestar la pregunta del bot con media frase.** Cuando el bot pregunta —"¿el
-      miércoles de mañana o el siguiente?"— solo entiende `sí` o el mensaje entero otra
-      vez. Un "el 30" a secas se procesa como mensaje nuevo, sin el contexto de la cita
-      pendiente, y no se entiende. Importa más ahora que el bot pregunta en más casos.
+- [ ] **Duplicados cuando el túnel se recupera.** El 2026-09-22 el mismo mensaje entró
+      dos veces, con identificadores distintos, y creó dos eventos idénticos. El dedup
+      va por id de mensaje y solo cubre los reintentos de Meta. La sospecha: Meta tenía
+      encolado el envío perdido mientras el túnel estaba caído y lo entregó junto con el
+      nuevo. Si se confirma, cada caída puede dejar eventos duplicados al recuperarse.
 
 ---
 

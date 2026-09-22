@@ -223,6 +223,42 @@ function promptSistema(ctx) {
  * @param {string} [opciones.esfuerzo]
  * @returns {Promise<object>} El evento conforme a ESQUEMA_EVENTO.
  */
+/**
+ * El contenido que se le manda al modelo.
+ *
+ * Normalmente es el mensaje tal cual. Pero cuando la persona esta contestando
+ * una pregunta del bot, mandar solo su respuesta pierde todo lo demas: un "que
+ * sea el 30" no tiene titulo, ni hora, ni lugar. Eso producia un "Evento por
+ * confirmar" de dia completo, borrando lo que ya se habia entendido bien.
+ *
+ * Con los dos mensajes juntos, el modelo puede reconstruir el evento entero. Se
+ * le dice ademas que la respuesta puede no ser una correccion sino una cita
+ * nueva: distinguirlo es cosa suya, no de una heuristica aqui.
+ *
+ * Va en el mensaje de usuario y no en el prompt del sistema a proposito: asi el
+ * banco de pruebas, que manda mensajes sueltos, recibe exactamente lo mismo que
+ * antes de que esto existiera.
+ */
+function contenidoUsuario(texto, previo) {
+  if (!previo?.texto) return texto;
+
+  return [
+    "Lo que sigue es una conversacion. La persona habia escrito:",
+    "",
+    previo.texto,
+    "",
+    ...(previo.pregunta ? ["Le preguntaste: " + previo.pregunta, ""] : []),
+    "Y ahora contesta:",
+    "",
+    texto,
+    "",
+    "Devuelve el evento completo ya resuelto, combinando los dos mensajes: lo que",
+    "la respuesta aclara manda, y lo que la respuesta no menciona se conserva del",
+    "primer mensaje. Si la respuesta describe una cita distinta en lugar de",
+    "corregir la anterior, quedate solo con la respuesta.",
+  ].join("\n");
+}
+
 export async function extraerEvento(texto, opciones = {}) {
   if (typeof texto !== "string" || texto.trim() === "") {
     throw new Error("extraerEvento necesita un texto no vacio.");
@@ -234,6 +270,9 @@ export async function extraerEvento(texto, opciones = {}) {
     modelo = MODELO,
     esfuerzo = ESFUERZO,
     presupuesto = PRESUPUESTO,
+    // { texto, pregunta } del intercambio anterior, cuando este mensaje es una
+    // respuesta a lo que el bot pregunto.
+    previo = null,
   } = opciones;
 
   const ctx = contextoTemporal(ahora, zona);
@@ -276,7 +315,7 @@ export async function extraerEvento(texto, opciones = {}) {
         ...(sinEsfuerzo ? {} : { effort: esfuerzo }),
         format: { type: "json_schema", schema: ESQUEMA_EVENTO },
       },
-      messages: [{ role: "user", content: texto }],
+      messages: [{ role: "user", content: contenidoUsuario(texto, previo) }],
     });
   } catch (error) {
     // Traduce los dos choques modelo/parametro a algo accionable, en vez de
