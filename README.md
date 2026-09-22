@@ -164,6 +164,43 @@ si alguien mataba a agendabot para liberar el puerto, se quedaba caído sin deja
 rastro en el log hasta el siguiente inicio de sesión. El Funnel apunta al 3100 y la
 URL pública no cambió, así que en Meta no hay nada que tocar.
 
+## Cuando el bot deja de contestar
+
+Es el único síntoma que da: nada se rompe a la vista, simplemente deja de responder en
+WhatsApp. Conviene mirar en este orden, que va de lo más barato a lo más caro.
+
+**1. El log, que dice si el mensaje llegó siquiera.** `logs/servidor.log`. Si aparece
+un `[mensaje]` reciente, el problema está de la puerta para adentro. Si no aparece
+nada, nunca llegó y hay que mirar la cadena de afuera. Ojo: las líneas de mensaje no
+llevan hora, así que para saber si son de ahora hay que ver la fecha de modificación
+del archivo, no las últimas líneas.
+
+**2. El servidor.** Que haya algo escuchando en el 3100 (`netstat -ano | grep 3100`).
+Si murió, se relanza con `scripts/iniciar-servidor-oculto.vbs`. La tarea programada
+**no** sirve para saberlo: reporta éxito aunque el servidor lleve horas muerto, porque
+vigila al `.vbs`, que salió bien en el primer segundo.
+
+**3. El túnel, que es el que más ha fallado.** El remedio conocido es apagarlo y
+encenderlo:
+
+```bash
+tailscale funnel --https=443 off
+tailscale funnel --bg 3100
+```
+
+Dos trampas aquí, las dos comprobadas a base de perder tiempo en ellas:
+
+- **`tailscale funnel status` dice "Funnel on" aunque no esté entregando nada.** No
+  sirve para descartar. Reencenderlo sin apagarlo antes tampoco arregla: hay que hacer
+  el ciclo completo.
+- **Que el DNS público devuelva una dirección `100.x` es normal, no es el fallo.**
+  Parece un cabo suelto evidente —es una dirección no enrutable desde internet— y no
+  lo es: el bot funciona con ese registro puesto. No gastes la tarde ahí.
+
+Para comprobar desde fuera de verdad hay que salir de la red local: abrir la URL
+pública en el celular **con el WiFi apagado**. Un `curl` desde la misma máquina no vale,
+porque resuelve por la tailnet y nunca sale a internet.
+
 El banco de pruebas usa una fecha de referencia fija (jueves 27 de agosto de 2026,
 15:00) para que "mañana" o "el próximo martes" tengan siempre la misma respuesta
 correcta; sin ese ancla, las pruebas cambiarían de resultado cada día.
