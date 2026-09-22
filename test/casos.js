@@ -153,4 +153,21 @@ export const CASOS = [
       confianza: "alta",
     },
   },
+  // Caso real, 2026-09-22: un martes, "el siguiente miercoles" se agendo para el
+  // miercoles de manana con confianza alta, y la persona hablaba del de la semana
+  // siguiente. Fecha equivocada y sin aviso, que es el error que este proyecto no
+  // se puede permitir. Aqui el equivalente: hoy es jueves, asi que "el proximo
+  // viernes" puede ser manana 28 o el 4 de septiembre. Cualquiera de las dos
+  // lecturas vale; lo que NO vale es resolverlo en silencio, por eso se exige que
+  // la confianza baje y que notas traiga la pregunta.
+  {
+    nombre: "proximo + dia que cae manana: hay que preguntar, no adivinar",
+    texto:
+      "quedamos con el proveedor el proximo viernes a las 10 de la manana para revisar el acero",
+    esperado: {
+      fecha: ["2026-08-28", "2026-09-04"],
+      hora_inicio: "10:00",
+      confianza: "media",
+    },
+  },
 ];

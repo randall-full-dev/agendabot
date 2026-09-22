@@ -413,3 +413,44 @@ la duplicación en el chat.
 plazo son justo aquellas en las que el mensaje *seguro* se podría entregar, porque la
 persona acaba de escribir y la ventana de 24 horas está abierta con certeza. Que se
 pueda mandar no es razón para mandarlo.
+
+---
+
+## 2026-09-22 · "El próximo miércoles" no es una fecha inequívoca
+
+**Qué pasó.** Un martes, alguien escribió "agenda una cita para el siguiente miércoles a
+las 8 de la mañana". El bot la agendó para el miércoles de **mañana**, con confianza
+alta y sin preguntar nada. La persona hablaba del miércoles de la semana siguiente. Una
+semana de error, en silencio: exactamente el fallo que la entrada del 2026-08-27 llama
+intolerable.
+
+**La causa estaba escrita en el prompt.** Decía, sin matices: *"el proximo martes =
+igual que arriba: el siguiente martes que venga"*. El modelo obedeció al pie de la
+letra. La regla no está mal en general —a varios días de distancia acierta— pero se cae
+justo cuando el día nombrado está encima.
+
+**Por qué ahí es ambiguo de verdad.** Si alguien quiere el miércoles de mañana, dice "el
+miércoles" o "mañana". Ponerle "próximo" o "siguiente" delante suele señalar distancia,
+no cercanía. Pero no siempre, y esa es la cuestión: no hay lectura correcta, hay dos.
+
+**Decisión.** Cuando "el próximo/siguiente <día>" cae mañana o pasado mañana, el
+extractor lo resuelve al más cercano —hay que proponer algo— pero baja la confianza a
+`media` y escribe en `notas` la pregunta con **las dos fechas**: "¿El miércoles de
+mañana, 23, o el siguiente, 30?". El bot no crea nada hasta que la persona conteste.
+
+**Se cambió la redacción dos veces, y la primera rompió un caso.** El primer intento
+empezaba con "EXCEPCIÓN: si ese día cae mañana...". El caso 3 del banco —"el próximo
+martes", a cinco días— pasó de `media` a `alta`: al leer una excepción para el caso
+cercano, el modelo dedujo que los demás eran inequívocos. La versión que quedó no
+establece una distinción sino que suma un requisito ("además de bajar la confianza hay
+que PREGUNTAR"), y con esa los 16 casos pasan. Vale como recordatorio de lo sensible que
+es este prompt a la forma, no solo al contenido.
+
+**Comprobado.** "El siguiente miércoles" ahora pregunta; "el miércoles" a secas sigue
+agendando directo sin preguntar de más; y "el próximo lunes" a seis días resuelve la
+fecha sin dudar. La discriminación es la que se buscaba: preguntar solo cuando el día
+está encima.
+
+**Consecuencia que queda abierta.** El bot ahora pregunta en más casos, y contestarle
+sigue siendo torpe: solo entiende `sí` o el mensaje corregido completo. Un "el 30" a
+secas no se entiende. Anotado en `TODO.md`.

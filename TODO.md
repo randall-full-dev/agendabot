@@ -93,8 +93,14 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
 
 ## Núcleo de extracción
 
-- [ ] **Casos de prueba más difíciles.** El banco de 15 ya no distingue Sonnet de
-      Opus. Los buenos saldrán de mensajes reales ahora que la Fase 3 funciona.
+- [ ] **Casos de prueba más difíciles.** El banco ya no distingue Sonnet de Opus. Los
+      buenos salen de mensajes reales: así entró el caso 16, de una cita que se agendó
+      con una semana de error (ver `DECISIONS.md`, 2026-09-22). Seguir sumándolos.
+
+- [ ] **Contestar la pregunta del bot con media frase.** Cuando el bot pregunta —"¿el
+      miércoles de mañana o el siguiente?"— solo entiende `sí` o el mensaje entero otra
+      vez. Un "el 30" a secas se procesa como mensaje nuevo, sin el contexto de la cita
+      pendiente, y no se entiende. Importa más ahora que el bot pregunta en más casos.
 
 ---
 

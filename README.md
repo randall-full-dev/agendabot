@@ -59,6 +59,9 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 - `hora_fin`: si no se especifica, el evento dura 1 hora.
 - `lugar`: solo si el mensaje lo menciona.
 - `confianza`: `alta` | `media` | `baja`. Si no es `alta`, el bot pregunta antes de crear.
+  Un caso que vale la pena conocer: **"el próximo/siguiente <día>" cuando ese día cae
+  mañana o pasado** no es `alta` por mucho que parezca clara. Se resuelve al más cercano,
+  pero el bot pregunta nombrando las dos fechas — ver `DECISIONS.md` (2026-09-22).
 - `notas`: cuando la confianza no es `alta`, **la pregunta que hay que hacerle a quien
   escribió**, redactada para que él la lea tal cual en el chat ("¿Es a las 4 de la tarde
   o de la mañana?"). El bot la reenvía sin tocarla. **No se escribe en el evento.**
@@ -74,7 +77,7 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 | `src/agendar.js` | Conecta extractor + calendar por CLI: texto → evento, en un comando. |
 | `src/whatsapp.js` | El idioma de Meta: verificación del webhook, firma HMAC, extracción de mensajes, envío de respuestas. |
 | `src/index.js` | El servidor: webhook → extractor → calendar → respuesta. Dedup de reintentos, lista de números permitidos, regla de confianza, y cómo le habla el bot al usuario. |
-| `test/casos.js` · `test/probar.js` | 15 mensajes de ejemplo con su resultado esperado, y el banco que los corre. |
+| `test/casos.js` · `test/probar.js` | 16 mensajes de ejemplo con su resultado esperado, y el banco que los corre. |
 
 **Detalle de `calendar.js`:** las horas se escriben como hora de pared con zona
 (`DTSTART;TZID=America/Mexico_City:...`), no como UTC. El porqué (un bug de la base de
@@ -128,7 +131,7 @@ cp .env.example .env        # y llenar las variables (ver .env.example)
 
 ```bash
 # Extracción (Fase 1)
-npm test                                     # los 15 casos
+npm test                                     # los 16 casos
 npm test -- --caso 3                         # solo el caso 3
 npm test -- --ver                            # imprime el JSON de cada caso
 npm run extraer -- "mañana a las 4 junta con el ingeniero"
