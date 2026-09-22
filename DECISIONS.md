@@ -378,3 +378,38 @@ corriendo en el minuto exacto y de una ventana que puede estar cerrada. Cambiar 
 más útil de un canal probado a uno sin rodaje es apostar de más. Si con el tiempo la
 alerta del calendario a esa hora resulta redundante, se quita **entonces**, con la
 evidencia de que el mensaje llega de forma fiable.
+
+---
+
+## 2026-09-22 · El mensaje de WhatsApp no existe para las citas de corto plazo
+
+**Contexto.** Completa la entrada anterior, que dejó decidido que el mensaje de WhatsApp
+iría en el aviso de una hora antes. La pregunta que faltaba: qué pasa cuando la cita
+está a menos de una hora, es decir, cuando ese aviso no llega a existir.
+
+Y no existe de verdad: el aviso de una hora solo sobrevive si la cita está a más de
+unos 65 minutos, porque por debajo de eso caería a menos de cinco minutos de haber
+agendado y el umbral lo descarta. Si el mensaje va montado sobre ese aviso, una cita de
+corto plazo no recibiría ninguno.
+
+**Decisión.** Que no reciba ninguno, y que esté escrito que es a propósito.
+
+**Por qué.** Porque el mensaje ya se mandó. Cuando alguien agenda una cita para dentro
+de 40 minutos, el bot acaba de contestarle en ese mismo chat con la confirmación y con
+los avisos que quedaron puestos. Esa respuesta *es* el aviso por WhatsApp. Mandar otro
+veinte minutos después, en una conversación que la persona todavía tiene abierta, es
+ruido.
+
+Es además el mismo criterio que ya rige el calendario: `MARGEN_MIN` existe justamente
+porque un aviso pegado al momento de agendar no informa a nadie. Aplicarlo también a
+WhatsApp mantiene la regla igual en los dos canales, en vez de tener una excepción que
+haya que recordar.
+
+**Lo que no se pierde.** En ese rango el calendario sigue avisando, con la alarma de 15
+minutos o con la de rescate. Nadie se queda sin recordatorio; lo único que no ocurre es
+la duplicación en el chat.
+
+**La trampa que esto evita.** Es tentador ver el hueco al revés: las citas de corto
+plazo son justo aquellas en las que el mensaje *seguro* se podría entregar, porque la
+persona acaba de escribir y la ventana de 24 horas está abierta con certeza. Que se
+pueda mandar no es razón para mandarlo.

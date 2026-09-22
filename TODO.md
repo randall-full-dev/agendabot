@@ -43,6 +43,11 @@ reinicio.
       envío, y la Cloud API solo deja texto libre dentro de las 24 h siguientes al
       último mensaje del usuario. Lo segundo **no lo resuelve el hosting**: hace falta
       una plantilla de utilidad aprobada por Meta.
+      **Si la cita está a menos de ~65 minutos no se manda nada por WhatsApp**, porque
+      a esa distancia el aviso de una hora no existe (lo descarta el umbral). Es
+      deliberado: el bot acaba de contestar en ese mismo chat con la confirmación, y esa
+      respuesta ya hace de aviso. El calendario cubre el rango con la alarma de 15
+      minutos o la de rescate. Ver `DECISIONS.md` (2026-09-22).
 
 ### El dolor que sigue vivo
 
