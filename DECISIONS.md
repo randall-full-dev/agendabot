@@ -492,3 +492,60 @@ todo lo anterior; guardar solo el último mensaje volvería a perder lo entendid
 **Comprobado con las tres formas naturales de contestar:** "quiero que la agendes para
 el siguiente miércoles 30", "el 30" y "no, el de la semana que entra". Las tres dan la
 misma cita completa, con su título, su hora y su lugar.
+
+---
+
+## 2026-09-23 · El recordatorio por WhatsApp fuera de la ventana (completa el 2026-09-21)
+
+**Contexto.** Al armar la cotización para presentar el proyecto se midió cada renglón
+del costo, y apareció uno que nadie había puesto en la cuenta: WhatsApp. Las notas que
+había estaban a medias. La entrada del 2026-09-21 dice que fuera de las 24 horas "Meta
+lo rechaza", que es cierto solo del texto libre; `TODO.md` sí nombra la plantilla de
+utilidad como la salida, pero en ningún lado estaba escrito **que esa salida se cobra**.
+
+**Cómo cobra Meta desde julio de 2025.** No cobra por mensaje: cobra por buscar tú a la
+persona en vez de contestarle. Cuando el usuario escribe, se abre una ventana de 24
+horas; dentro de ella el bot manda lo que quiera, con el texto que quiera, gratis
+—Meta lo factura como `free_customer_service`—. Fuera de ella no hay texto libre, y lo
+único que pasa es una plantilla aprobada de antemano, que sí se cobra por envío.
+
+**Lo que cuesta hoy: cero**, y no por barato sino porque el bot solo contesta. Nunca
+inicia una conversación.
+
+**Dónde aparecería el cobro.** Solo en el recordatorio de una hora de la Fase 4b, y solo
+cuando la cita se agendó con más de un día de anticipación: ahí el aviso cae fuera de la
+ventana. Una cita agendada hoy para hoy avisa gratis; una agendada el lunes para el
+jueves, no. La tarifa de utilidad para México ronda los **$0.0080 USD** (unos 14
+centavos). El dato viene de un comparador, no del tarifario oficial de Meta —ese va en
+un CSV aparte—, así que vale como orden de magnitud: aun equivocándose al doble, son
+entre 20 y 40 pesos al mes.
+
+**Decisión.** Cuando se construya el recordatorio, **se manda solo si la ventana de 24
+horas está abierta**. Si está cerrada no se manda nada, y el aviso lo da la alerta del
+calendario, que para eso está. Costo cero, sin plantilla y sin trámite.
+
+**Por qué esto y no pagar.** El obstáculo real no es el dinero, son los 20 pesos. Es que
+una plantilla hay que someterla a revisión de Meta y queda con **texto fijo y huecos
+para las variables**: el recordatorio dejaría de poder decir "tu junta con el arquitecto
+en la obra de Satélite" y tendría que caber en una frase aprobada de antemano. Eso es
+trabajo, y es una dependencia externa que puede tardar lo que Meta quiera. Evitar el
+trámite vale más que ganar el recordatorio en los casos lejanos.
+
+**Encaja con lo ya decidido.** El 2026-09-22 se eligió la hora de una hora antes, entre
+otras cosas, porque es "el que más veces cae dentro de la ventana de Meta". Esta entrada
+solo termina la frase: cuando no cae dentro, no se manda.
+
+**Descartado.**
+
+- **Pagar la plantilla para que el recordatorio llegue siempre.** Se revisa si algún día
+  el jefe pide de verdad el aviso por WhatsApp en citas lejanas. Hoy sería pagar un
+  trámite por un caso que la alerta del calendario ya cubre.
+- **No construir el recordatorio.** Sigue sobre la mesa —el `TODO.md` ya contempla
+  quitarlo si con el rodaje resulta redundante—, pero mientras exista la intención de
+  tenerlo, la regla de la ventana es la forma barata de tenerlo.
+
+**Consecuencia aceptada.** Las citas agendadas con varios días de anticipación no van a
+recibir el mensaje de WhatsApp, y son justo en las que más fácil se olvida una cita. Se
+acepta porque ahí el canal fiable es el calendario: la alerta la dispara Apple y suena
+aunque el servidor esté caído, mientras que el mensaje del bot exige un proceso vivo a
+esa hora exacta. El WhatsApp es el añadido, no el aviso.

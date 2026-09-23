@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-22**
+Última revisión: **2026-09-23**
 
 ---
 
@@ -39,10 +39,13 @@ reinicio.
       cae dentro de la ventana de Meta—. Si con el rodaje la alerta del calendario a esa
       hora resulta redundante, se quita entonces, ya con evidencia.
       Probado el 2026-09-21: se programó un envío y Meta lo aceptó. Espera al hosting
-      por dos razones (ver `DECISIONS.md`): exige un proceso vivo a la hora exacta del
-      envío, y la Cloud API solo deja texto libre dentro de las 24 h siguientes al
-      último mensaje del usuario. Lo segundo **no lo resuelve el hosting**: hace falta
-      una plantilla de utilidad aprobada por Meta.
+      porque exige un proceso vivo a la hora exacta del envío.
+      **Se manda solo si la ventana de 24 h está abierta**; si está cerrada, no se manda
+      nada y el aviso lo da la alerta del calendario. Así no hace falta la plantilla de
+      utilidad aprobada por Meta, que es la única forma de escribir fuera de la ventana
+      y que se cobra por envío (~$0.0080 en México). Decidido el 2026-09-23 para evitar
+      el trámite, no el cobro: la plantilla obliga a texto fijo y a esperar revisión de
+      Meta. Ver `DECISIONS.md` (2026-09-23).
       **Si la cita está a menos de ~65 minutos no se manda nada por WhatsApp**, porque
       a esa distancia el aviso de una hora no existe (lo descarta el umbral). Es
       deliberado: el bot acaba de contestar en ese mismo chat con la confirmación, y esa
@@ -75,11 +78,15 @@ pantalla de bloqueo, el bot no corre hasta que alguien entre — ver `DECISIONS.
 
 Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas:
 
-- [ ] **Cotización completa: servidor + consumo de API.** Si se aprueba, presentar no
-      solo el hosting (~$5/mes) sino también el costo del modelo por mensaje (~1¢ con
-      Sonnet, ver `DECISIONS.md` 2026-08-27) y quién paga esa cuenta: hoy el consumo
-      sale de la cuenta personal de Anthropic del usuario, y eso debe pasar a una
-      cuenta de la empresa.
+- [ ] **Cotización completa: son tres renglones, no dos.** Hosting (~$5/mes), consumo
+      del modelo y WhatsApp. Las cifras ya están medidas —2,470 tokens de entrada y 409
+      de salida por mensaje, **$0.0090 (0.90¢)** con `claude-sonnet-5`, medido el
+      2026-09-23 con `npm run extraer`— y confirman el ~1¢ estimado en `DECISIONS.md`
+      (2026-08-27). **WhatsApp no cuesta nada** mientras el bot solo conteste, y con la
+      regla de la ventana tampoco costará después: ver `DECISIONS.md` (2026-09-23). Lo
+      que falta no son números sino la conversación: **quién paga la cuenta de
+      Anthropic**, que hoy sale de la cuenta personal del usuario y debe pasar a una de
+      la empresa. Hay una hoja de una página para presentarlo, ya hecha.
 - [ ] **Número de WhatsApp real** en vez del número de pruebas de Meta. Implica
       decidir si el bot vive en su chat propio o en otro flujo.
 - [ ] **Cuenta de Apple del jefe:** que genere él su contraseña específica de app y
