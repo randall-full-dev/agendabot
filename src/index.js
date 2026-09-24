@@ -185,8 +185,36 @@ const AYUDA =
   "Mándame una cita en un mensaje y la agendo en tu calendario.\n\n" +
   "Por ejemplo: «Comida con Rosa el viernes a la 1 en el centro».";
 
+// Lo que llega sin texto --una nota de voz, una foto, una ubicacion-- tampoco
+// pasa por el modelo, pero no por ahorro: el bot no sabe leerlo. Lo que importa
+// es contestar. Quedarse mudo es justo el sintoma de que el servidor se cayo
+// (ver README), y quien escribio no tiene como distinguir una cosa de la otra.
+const NO_TEXTO = {
+  voz: ["las notas de voz", "las"],
+  audio: ["los audios", "los"],
+  image: ["las imágenes", "las"],
+  video: ["los videos", "los"],
+  document: ["los documentos", "los"],
+  sticker: ["los stickers", "los"],
+  location: ["las ubicaciones", "las"],
+  contacts: ["los contactos", "los"],
+};
+
+function avisoSoloTexto(tipo) {
+  const [nombre, pronombre] = NO_TEXTO[tipo] ?? ["eso", "lo"];
+  return (
+    `Por ahora solo leo texto: ${nombre} todavía no ${pronombre} entiendo.\n\n` +
+    "Si me escribes la cita, la agendo."
+  );
+}
+
 async function responder(mensaje) {
-  const { de, texto } = mensaje;
+  const { de, texto, tipo } = mensaje;
+
+  // Sin texto no hay nada que extraer. Se contesta aqui y no sigue: no gasta
+  // una llamada al modelo y no toca lo que estuviera pendiente --si el bot
+  // habia preguntado algo, la pregunta sigue en pie para el proximo mensaje.
+  if (tipo !== "text") return avisoSoloTexto(tipo);
 
   // Lo que quedo esperando respuesta: { evento, texto }. El texto original hace
   // falta porque la respuesta, por si sola, casi nunca es una cita completa.
@@ -265,7 +293,10 @@ async function procesar(mensaje) {
     return;
   }
 
-  console.log(`[mensaje] ${mensaje.de}: ${mensaje.texto.slice(0, 80)}`);
+  console.log(
+    `[mensaje] ${mensaje.de}: ` +
+      (mensaje.tipo === "text" ? mensaje.texto.slice(0, 80) : `(${mensaje.tipo})`),
+  );
 
   let respuesta;
   try {

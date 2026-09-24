@@ -48,12 +48,28 @@ export function firmaValida(cuerpoCrudo, encabezado, secreto) {
   return timingSafeEqual(Buffer.from(esperada), Buffer.from(recibida));
 }
 
+// Lo que llega sin ser texto y aun asi es alguien intentando decir algo. A
+// estos el bot contesta que no los entiende; el resto --reacciones, avisos del
+// sistema, lo que Meta marca "unsupported"-- se ignora en silencio, porque
+// nadie espera respuesta a un pulgar arriba.
+const TIPOS_SIN_TEXTO = new Set([
+  "audio",
+  "image",
+  "video",
+  "document",
+  "sticker",
+  "location",
+  "contacts",
+]);
+
 /**
- * Saca los mensajes de texto del sobre en que Meta los manda (entry >
- * changes > value > messages, con varios posibles de cada uno). Ignora todo
- * lo que no sea texto: estados de entrega, reacciones, audios, imagenes.
+ * Saca los mensajes del sobre en que Meta los manda (entry > changes > value >
+ * messages, con varios posibles de cada uno). Los de texto salen con su
+ * contenido; los de TIPOS_SIN_TEXTO salen marcados y con `texto` vacio, para
+ * que index.js conteste que no los entiende en vez de callarse. Los estados de
+ * entrega no pasan por aqui: viajan en `statuses`, no en `messages`.
  *
- * Devuelve [{ id, de, nombre, texto }].
+ * Devuelve [{ id, de, nombre, tipo, texto }].
  */
 export function extraerMensajes(payload) {
   const mensajes = [];
@@ -66,13 +82,25 @@ export function extraerMensajes(payload) {
       );
 
       for (const m of valor.messages ?? []) {
-        if (m.type !== "text" || !m.text?.body) continue;
-        mensajes.push({
+        const base = {
           id: m.id,
           de: m.from,
           nombre: contactos.get(m.from) ?? "",
-          texto: m.text.body,
-        });
+        };
+
+        if (m.type === "text" && m.text?.body) {
+          mensajes.push({ ...base, tipo: "text", texto: m.text.body });
+          continue;
+        }
+
+        if (TIPOS_SIN_TEXTO.has(m.type)) {
+          // Una nota de voz y un archivo de audio llegan los dos como "audio";
+          // los separa `voice`, que Meta pone en true solo cuando se grabo con
+          // el boton del microfono. Importa porque en el chat no se llaman
+          // igual; si el campo no viniera, "audio" tambien se entiende.
+          const tipo = m.type === "audio" && m.audio?.voice ? "voz" : m.type;
+          mensajes.push({ ...base, tipo, texto: "" });
+        }
       }
     }
   }

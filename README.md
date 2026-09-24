@@ -103,6 +103,18 @@ local, sin llamar al modelo: son gratis e instantáneos. La lista es de coincide
 exacta a propósito — cualquier atajo más listo se comería un "nos vemos mañana en la
 obra", que sí es una cita.
 
+**El bot solo lee texto, y lo dice.** Una nota de voz, una foto, una ubicación o un
+documento no se pueden extraer, pero tampoco se ignoran: el bot contesta nombrando lo
+que llegó ("las notas de voz todavía no las entiendo") y pide el mensaje escrito. Callarse
+sería peor, porque *dejar de contestar* es exactamente el síntoma de que el servidor se
+cayó — quien escribe no tendría cómo distinguir una cosa de la otra. La respuesta no
+cuesta nada (no pasa por la API) y no pisa lo que estuviera pendiente: si el bot había
+preguntado algo, la pregunta sigue en pie para el siguiente mensaje. `whatsapp.js` decide
+qué tipos merecen respuesta —una reacción o un aviso del sistema se ignoran en silencio,
+nadie espera contestación a un pulgar arriba— e `index.js` escribe la frase. Transcribir
+las notas de voz de verdad está en `TODO.md`; el porqué de no hacerlo todavía, en
+`DECISIONS.md` (2026-09-24).
+
 **Recordatorios:** todos los eventos se crean con aviso; no hay forma de pedir uno sin
 él. Una cita con hora avisa **1 día, 1 hora y 15 minutos antes**; una de día completo,
 a las **9:00 del día anterior y a las 9:00 del mismo día** (a la medianoche, que es

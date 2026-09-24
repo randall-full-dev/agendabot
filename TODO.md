@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-23**
+Última revisión: **2026-09-24**
 
 ---
 
@@ -122,4 +122,19 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
       fija (ver `DECISIONS.md`, 2026-09-21). Elegir otra anticipación desde el mensaje
       —"avísame con dos días"— se descartó por ahora: obliga a tocar el prompt y el
       esquema del extractor. Se retoma si alguien lo pide de verdad.
-- [ ] Soporte para notas de voz.
+- [ ] **Transcribir las notas de voz.** Hoy el bot contesta que solo lee texto (eso ya
+      está hecho); falta entenderlas. Claude no acepta audio, así que hace falta un
+      proveedor de transcripción y el trabajo se reparte así: `whatsapp.js` deja pasar
+      `type === "audio"` y baja el archivo (`GET /<media-id>` → URL temporal → descarga
+      con el mismo Bearer; llega en OGG/Opus), un `src/transcribir.js` nuevo convierte
+      audio en texto, e `index.js` lo enchufa antes del extractor. **`extractor.js`,
+      `calendar.js` y los 16 casos no se tocan**, que es lo que hace esto barato.
+      Costo medido de referencia: ~0.2-0.3¢ por nota de 30 s vía API, sobre los 0.90¢
+      que ya cuesta un mensaje. **Bloqueado a propósito** hasta que se resuelva quién
+      paga la cuenta de Anthropic: hoy sumaría una tercera cuenta con tarjeta. El
+      análisis completo, con lo descartado y por qué Whisper local sale caro, en
+      `DECISIONS.md` (2026-09-24).
+      Lo que hay que resolver cuando se retome: qué hace el bot con una transcripción
+      vacía o a medias, y de dónde salen los casos de prueba —el banco es de texto y
+      la transcripción no es determinista, así que harían falta notas de voz reales
+      guardadas como fixtures.

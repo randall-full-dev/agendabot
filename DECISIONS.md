@@ -549,3 +549,62 @@ recibir el mensaje de WhatsApp, y son justo en las que más fácil se olvida una
 acepta porque ahí el canal fiable es el calendario: la alerta la dispara Apple y suena
 aunque el servidor esté caído, mientras que el mensaje del bot exige un proceso vivo a
 esa hora exacta. El WhatsApp es el añadido, no el aviso.
+
+---
+
+## 2026-09-24 · Las notas de voz: contestar ahora, transcribir después
+
+**Contexto.** Surgió la pregunta de si el bot podría recibir mensajes de audio. Al
+revisarlo apareció algo que no estaba escrito en ningún lado: `extraerMensajes` en
+`whatsapp.js` descartaba todo lo que no fuera texto, así que una nota de voz **no
+producía ninguna respuesta**. Y quedarse mudo es justo el síntoma que el `README`
+describe como "el bot está caído": desde el otro lado del chat, un audio ignorado y un
+servidor muerto se ven idénticos.
+
+**La pieza que falta.** La API de Claude acepta texto, imágenes y PDF; **audio no**.
+Transcribir no es un ajuste del prompt: es un proveedor nuevo, una cuenta nueva y una
+tarjeta nueva.
+
+**Lo que se hizo hoy.** Los tipos que son alguien intentando decir algo —audio, imagen,
+video, documento, sticker, ubicación, contacto— salen marcados de `whatsapp.js` con
+`texto` vacío, e `index.js` contesta nombrando lo que llegó y pidiendo el mensaje
+escrito. Las reacciones y los avisos del sistema se siguen ignorando en silencio: nadie
+espera respuesta a un pulgar arriba. La respuesta no pasa por la API —no cuesta— y no
+pisa lo que estuviera pendiente.
+
+**Decisión: no se transcribe todavía.** Queda en el `TODO.md` con el plan escrito. El
+freno no es técnico ni de dinero: es que hoy sumaría **una tercera cuenta con tarjeta**
+(Anthropic, hosting, transcripción) cuando la primera todavía sale de la cuenta personal
+del usuario y esa conversación con el jefe sigue pendiente. Pedir dos aprobaciones en
+vez de una para algo que está en el backlog es mal orden.
+
+**Lo que costaría, medido.** Por API, una nota de 30 s sale entre 0.12¢ y 0.30¢ según el
+proveedor (AssemblyAI $0.0025/min, Deepgram por lotes $0.0043/min, Whisper de OpenAI
+$0.006/min). Sobre los 0.90¢ que ya cuesta un mensaje, un mensaje de voz quedaría en
+~1.1-1.2¢. En la cotización no se nota.
+
+**Descartado.**
+
+- **Whisper local, en el servidor de pago.** Es la opción que parece gratis y no lo es.
+  Railway cobra por uso real, **$10 por GB de RAM al mes y $20 por vCPU al mes**, y un
+  proceso que tiene el modelo cargado ocupa esa memoria todo el tiempo: `faster-whisper`
+  en `base` con int8 pide ~1.5 GB (~$15/mes) y `small` ~2 GB (~$20/mes), que es lo que
+  haría falta para español mexicano con nombres y jerga de obra. El hosting pasaría de
+  ~$5 a ~$20-25 al mes **por transcribir unas cuantas notas de voz al día**, y con la
+  API esas mismas notas cuestan menos de un dólar al mes. El punto de equilibrio anda
+  por las 5,000 notas mensuales —más de 150 al día—, que no es este proyecto ni de
+  lejos. Añade además un segundo runtime (Python o el binario de whisper.cpp), una
+  imagen de despliegue de más de 1 GB y 8-15 segundos de espera por nota en una vCPU
+  compartida, contra 1-3 segundos por API.
+- **Whisper local en la máquina del piloto.** Ahí sí sería gratis, pero la Fase 4b
+  desmonta ese servidor a propósito. Sería construir sobre lo que ya se decidió tirar.
+- **Descargar el audio la máquina y transcribir ahí.** Misma objeción.
+
+**Cuándo se revisa esto.** Whisper local vuelve a la mesa si pasa una de dos cosas: que
+el volumen suba de verdad (varias decenas de notas al día), o que alguien ponga sobre la
+mesa que la voz del jefe no debe salir hacia un tercero. La privacidad es el único
+argumento que hoy le ganaría a la aritmética.
+
+**Consecuencia aceptada.** Quien mande una nota de voz recibe un "solo leo texto" y tiene
+que escribirla. Es una fricción real y es la respuesta honesta: el bot dice lo que sabe
+hacer en vez de fingir que entendió.
