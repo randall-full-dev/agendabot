@@ -1,8 +1,11 @@
 // Corre el extractor contra todos los casos y reporta que campos fallaron.
 //
-//   npm test                  todos los casos
-//   npm test -- --caso 3      solo el caso 3
-//   npm test -- --ver         imprime el JSON completo de cada caso
+//   npm test                            todos los casos
+//   node test/probar.js --caso 3        solo el caso 3
+//   node test/probar.js --ver           imprime el JSON completo de cada caso
+//
+// Con banderas hay que llamar a node directo: npm 11 rechaza lo que no
+// reconoce ("Unknown cli flag: --caso") aunque vaya despues de --.
 //
 // No es un framework de pruebas: es un banco de pruebas para afinar el prompt.
 // Cuando toques el prompt del extractor, corre esto y confirma que no rompiste
@@ -14,15 +17,16 @@ import { AHORA, CASOS } from "./casos.js";
 
 const CONCURRENCIA = 4;
 
-// Precios en USD por millon de tokens, consultados en agosto de 2026.
-// Solo sirven para estimar y comparar configuraciones entre si; la cuenta real
-// es la de platform.claude.com.
-const PRECIOS = {
-  "claude-opus-5": { entrada: 5, salida: 25 },
-  "claude-opus-4-8": { entrada: 5, salida: 25 },
-  "claude-sonnet-5": { entrada: 3, salida: 15 },
-  "claude-haiku-4-5": { entrada: 1, salida: 5 },
-};
+// Aqui NO hay tabla de precios, y es a proposito. Hubo una y se desfaso en
+// silencio: tenia sonnet-5 a $3/$15 cuando ya iba en $2/$10, asi que el banco
+// imprimia un costo 50% inflado mientras el TODO, medido aparte, decia otra
+// cosa. Dos fuentes de verdad para el mismo numero, y la equivocada era la que
+// se imprimia en pantalla.
+//
+// Lo que se reporta son los tokens, que no caducan. Para pasarlos a dinero se
+// multiplica por la tarifa del dia, que vive en platform.claude.com y en ningun
+// otro lado. Si vuelve a hacer falta un costo, se apunta fechado en TODO.md o
+// DECISIONS.md, no se cablea aqui.
 
 const args = process.argv.slice(2);
 const verboso = args.includes("--ver");
@@ -146,15 +150,13 @@ const total = resultados.length;
 const errores = resultados.filter((r) => r.error).length;
 const color = pasaron === total ? VERDE : ROJO;
 
-const precio = PRECIOS[modelo];
 let linea = `${GRIS}tokens: ${tokensEntrada} entrada, ${tokensSalida} salida`;
-if (precio && total > 0) {
-  const costo =
-    (tokensEntrada / 1e6) * precio.entrada + (tokensSalida / 1e6) * precio.salida;
-  const centavosPorMensaje = (costo / total) * 100;
+if (total > 0) {
+  // Por mensaje es la forma util: es lo que se multiplica por la tarifa del dia
+  // para sacar el costo, y lo que se compara entre modelos o niveles de effort.
   linea +=
-    ` | ~$${costo.toFixed(4)} USD esta corrida` +
-    `, ~${centavosPorMensaje.toFixed(2)}¢ por mensaje`;
+    ` | por mensaje: ${Math.round(tokensEntrada / total)} entrada` +
+    `, ${Math.round(tokensSalida / total)} salida`;
 }
 
 console.log(

@@ -77,7 +77,7 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 | `src/agendar.js` | Conecta extractor + calendar por CLI: texto → evento, en un comando. |
 | `src/whatsapp.js` | El idioma de Meta: verificación del webhook, firma HMAC, extracción de mensajes, envío de respuestas. |
 | `src/index.js` | El servidor: webhook → extractor → calendar → respuesta. Dedup de reintentos, lista de números permitidos, regla de confianza, y cómo le habla el bot al usuario. |
-| `test/casos.js` · `test/probar.js` | 16 mensajes de ejemplo con su resultado esperado, y el banco que los corre. |
+| `test/casos.js` · `test/probar.js` | 17 mensajes de ejemplo con su resultado esperado, y el banco que los corre. |
 
 **Detalle de `calendar.js`:** las horas se escriben como hora de pared con zona
 (`DTSTART;TZID=America/Mexico_City:...`), no como UTC. El porqué (un bug de la base de
@@ -151,9 +151,9 @@ cp .env.example .env        # y llenar las variables (ver .env.example)
 
 ```bash
 # Extracción (Fase 1)
-npm test                                     # los 16 casos
-npm test -- --caso 3                         # solo el caso 3
-npm test -- --ver                            # imprime el JSON de cada caso
+npm test                                     # los 17 casos
+node test/probar.js --caso 3                 # solo el caso 3
+node test/probar.js --ver                    # imprime el JSON de cada caso
 npm run extraer -- "mañana a las 4 junta con el ingeniero"
 
 # Calendario (Fase 2)

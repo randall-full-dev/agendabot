@@ -39,7 +39,7 @@ gana si el proyecto crece o entra más gente; hoy sería ceremonia.
 ## Al tocar el extractor
 
 Correr `npm test` después de cambiar el prompt o el esquema de `src/extractor.js`. Los
-16 casos son la red que evita romper una fecha o una hora sin darse cuenta. El prompt
+17 casos son la red que evita romper una fecha o una hora sin darse cuenta. El prompt
 es sensible: un cambio de redacción puede mover un caso.
 
 ## Idioma

@@ -128,7 +128,7 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
       `type === "audio"` y baja el archivo (`GET /<media-id>` → URL temporal → descarga
       con el mismo Bearer; llega en OGG/Opus), un `src/transcribir.js` nuevo convierte
       audio en texto, e `index.js` lo enchufa antes del extractor. **`extractor.js`,
-      `calendar.js` y los 16 casos no se tocan**, que es lo que hace esto barato.
+      `calendar.js` y los casos del banco no se tocan**, que es lo que hace esto barato.
       Costo medido de referencia: ~0.2-0.3¢ por nota de 30 s vía API, sobre los 0.90¢
       que ya cuesta un mensaje. **Bloqueado a propósito** hasta que se resuelva quién
       paga la cuenta de Anthropic: hoy sumaría una tercera cuenta con tarjeta. El
