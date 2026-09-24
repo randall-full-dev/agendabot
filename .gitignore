@@ -15,3 +15,9 @@ Thumbs.db
 
 # Salidas de pruebas
 test/salidas/
+
+# Entorno de Python para las pruebas de transcripcion (rama pruebas/notas-de-voz)
+.venv/
+
+# Audios de prueba: son la voz de alguien, no se suben
+pruebas-voz/audios/
