@@ -134,7 +134,14 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
       paga la cuenta de Anthropic: hoy sumaría una tercera cuenta con tarjeta. El
       análisis completo, con lo descartado y por qué Whisper local sale caro, en
       `DECISIONS.md` (2026-09-24).
-      Lo que hay que resolver cuando se retome: qué hace el bot con una transcripción
-      vacía o a medias, y de dónde salen los casos de prueba —el banco es de texto y
-      la transcripción no es determinista, así que harían falta notas de voz reales
-      guardadas como fixtures.
+      **Medido el 2026-09-24** en la rama `pruebas/notas-de-voz`: `large-v3` no falló
+      ni una vez en 71 s de notas reales de varias personas, el extractor absorbió
+      solas las rarezas del dictado, y los mensajes claros salen más baratos que el
+      promedio escrito. Con eso cayó la duda de si la calidad alcanza; ver
+      `DECISIONS.md` (2026-09-24, segunda entrada). Pero solo corre así **con GPU
+      NVIDIA**, y el Railway de 4b no tiene: gratis en esta laptop, imposible allá.
+      Esa es hoy la decisión de fondo, no la calidad.
+      Lo que sigue abierto: qué hace el bot con una transcripción vacía o a medias, y
+      cómo se prueba de punta a punta —el banco es de texto y la transcripción no es
+      determinista—. Ya hay cuatro notas de voz guardadas como fixtures (no se suben:
+      son la voz de alguien) y el caso 17 del banco salió de la primera de ellas.

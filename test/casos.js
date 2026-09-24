@@ -170,4 +170,26 @@ export const CASOS = [
       confianza: "media",
     },
   },
+  // Caso real, 2026-09-24: la primera nota de voz que se paso por el extractor
+  // (rama pruebas/notas-de-voz). Es texto dictado, no escrito, y trae las dos
+  // marcas de eso: una palabra repetida por titubeo y un dia de la semana que
+  // no cuadra con la fecha --el 2 de septiembre es miercoles, no viernes--.
+  // Quien hablaba se equivoco; queria octubre.
+  //
+  // Lo que se vigila aqui no es que adivine bien, es que NO resuelva en
+  // silencio: cualquiera de las tres lecturas es defendible, pero con confianza
+  // alta ninguna. Si un dia esto empieza a pasar con confianza alta, la voz deja
+  // de ser segura y hay que enterarse por aqui, no por un evento equivocado en
+  // el calendario.
+  {
+    nombre: "dictado: el dia de la semana contradice la fecha",
+    texto:
+      "Oye chat, agéndame una junta para el viernes, viernes 2 de septiembre, por favor, a las 9 en Audi.",
+    esperado: {
+      fecha: [null, "2026-09-02", "2026-09-04"],
+      hora_inicio: "09:00",
+      lugar: "Audi",
+      confianza: ["baja", "media"],
+    },
+  },
 ];

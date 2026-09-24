@@ -608,3 +608,63 @@ argumento que hoy le ganaría a la aritmética.
 **Consecuencia aceptada.** Quien mande una nota de voz recibe un "solo leo texto" y tiene
 que escribirla. Es una fricción real y es la respuesta honesta: el bot dice lo que sabe
 hacer en vez de fingir que entendió.
+
+---
+
+## 2026-09-24 · Whisper local sí entiende (completa la entrada anterior de hoy)
+
+**Contexto.** La entrada anterior dejó las notas de voz en el `TODO.md` sin construir, y
+descartó Whisper local con un argumento de costo de hosting. Faltaba el dato que ningún
+comparador da: **si Whisper entiende de verdad el español de aquí**, con obra, siglas y
+nombres propios. Se probó en la máquina del piloto, que resultó tener una NVIDIA RTX
+3050 de 6 GB. La prueba vive en `pruebas-voz/` y en la rama `pruebas/notas-de-voz`.
+
+**Qué se midió.** Cuatro notas de voz reales de WhatsApp, grabadas por personas
+distintas, 71 segundos en total, en el OGG/Opus tal como llega —no hizo falta convertir
+nada ni instalar ffmpeg: PyAV lo trae dentro—.
+
+| Modelo | Dispositivo | Errores | Velocidad |
+| --- | --- | --- | --- |
+| `small` | CPU | 1 en 71 s | 3.7x tiempo real |
+| `large-v3` | CPU | 0 | 0.8x (más lento que el audio) |
+| `large-v3` | GPU | 0 | ~14x en crucero |
+
+**`large-v3` no falló una sola vez.** Pasaron limpios "catálogo de conceptos", "proyecto
+ejecutivo", "constructora IME", "edificio Banamex", "Plaza Dorada". El único error de
+toda la sesión lo hizo `small`: oyó **"en abril" donde decía "en Audi"** — un nombre
+propio convertido en un mes, o sea basura apuntando al campo `fecha`. Ese error es
+exactamente el argumento para no usar un modelo chico aquí.
+
+**El extractor aguantó lo que le echamos, sin saber que venía de voz.** Un mensaje traía
+un día de la semana que contradecía la fecha; bajó la confianza y preguntó, en vez de
+agendar. Otro traía la pregunta de un segundo hablante metida a media grabación
+("¿Así?"); la descartó sin ensuciar el evento. **La regla de confianza ya cubría el modo
+de fallo del dictado sin que nadie la diseñara para eso**, que es el hallazgo que más
+pesa: no hace falta un camino especial para la voz.
+
+**Costo: el canal no encarece, la ambigüedad sí.** Los tres mensajes claros salieron a
+0.61¢, 0.66¢ y 0.76¢, **por debajo** de los 0.90¢ medidos el 2026-09-23 para un mensaje
+escrito. El único caro (1.9¢) fue el que traía la contradicción de fechas, y habría
+costado igual tecleado. Se corrige de paso una suposición que se dijo en voz alta
+durante la prueba: que la voz encarecería la extracción. No lo hace.
+
+**La tensión que esto abre, y que no se resuelve aquí.** Todo lo anterior depende de una
+GPU NVIDIA. En CPU, `large-v3` tarda más que el audio que transcribe, y el plan de la
+Fase 4b es un Railway sin GPU. Queda así: **gratis y rápido mientras el piloto viva en
+esta laptop; imposible en el hosting que está planeado.** La entrada anterior sigue
+válida —la aritmética del servidor rentado no se movió—, pero la opción "durante el
+piloto" pasó de teórica a medida.
+
+**Lo que no se probó, y conviene no olvidar.** Ruido de obra de fondo, señal mala, prisa
+al hablar. Y la alucinación de Whisper sobre silencio es un fenómeno documentado que
+**aquí no apareció** —lo que parecía un invento resultó ser voz real de quien grababa—,
+pero un marcador limpio en 71 segundos no es una garantía.
+
+**Decisión: ninguna todavía.** Esto mide, no compromete. Construir la función sigue
+bloqueado por lo de siempre: quién paga la cuenta de Anthropic. Lo que cambia es que
+ahora se decide con números propios y no con estimaciones.
+
+**Dos trampas de Windows que costaron encontrarlas** (anotadas en `pruebas-voz/`): las
+DLL de CUDA se instalan con pip pero lo que las encuentra es el **PATH**, no
+`add_dll_directory`; y CTranslate2 carga el modelo en la GPU sin quejarse y falla hasta
+que toca calcular, porque `transcribe()` devuelve un generador perezoso.
