@@ -205,13 +205,30 @@ Dos trampas aquí, las dos comprobadas a base de perder tiempo en ellas:
 - **`tailscale funnel status` dice "Funnel on" aunque no esté entregando nada.** No
   sirve para descartar. Reencenderlo sin apagarlo antes tampoco arregla: hay que hacer
   el ciclo completo.
-- **Que el DNS público devuelva una dirección `100.x` es normal, no es el fallo.**
-  Parece un cabo suelto evidente —es una dirección no enrutable desde internet— y no
-  lo es: el bot funciona con ese registro puesto. No gastes la tarde ahí.
+- **El DNS público es donde se rompe, y desde la laptop no se puede ver.** El
+  2026-10-12 Tailscale dejó de publicar en internet el registro de
+  `rm-lap-03.tail65c817.ts.net` —NXDOMAIN en sus propios servidores autoritativos, en
+  Google y en Cloudflare— y Meta no tenía a dónde entregar, mientras el cliente seguía
+  diciendo "Funnel on". La trampa: cualquier consulta hecha desde la propia máquina
+  (`nslookup`, `Resolve-DnsName`, aunque se le pida un servidor externo) devuelve la
+  dirección `100.x` del nodo, porque Tailscale intercepta el nombre. Esa `100.x` no es
+  lo que ve internet: no sirve ni para confirmar ni para descartar.
 
-Para comprobar desde fuera de verdad hay que salir de la red local: abrir la URL
-pública en el celular **con el WiFi apagado**. Un `curl` desde la misma máquina no vale,
-porque resuelve por la tailnet y nunca sale a internet.
+Para comprobar desde fuera de verdad, preguntarle a un resolutor público por HTTPS, que
+sí sale de la red local:
+
+```bash
+curl "https://dns.google/resolve?name=rm-lap-03.tail65c817.ts.net&type=A"
+```
+
+Sano: contesta con direcciones públicas del ingreso de Funnel (no `100.x`). Roto:
+`"Status":3` (NXDOMAIN), aunque todo lo local diga que está bien. Es un problema conocido
+y sin arreglar de Tailscale (tailscale/tailscale #11849 y #20892); el ciclo de arriba lo
+corrige y el registro tarda hasta diez minutos en reaparecer. Al recuperarse, Meta
+entrega de golpe lo que tenía encolado —reintenta hasta siete días— y el bot lo procesa
+como si fuera nuevo. Abrir la URL pública en el celular con el WiFi apagado también
+vale, pero es más lento y depende de la caché del teléfono. Un `curl` a la URL desde la
+misma máquina no vale, porque resuelve por la tailnet y nunca sale a internet.
 
 El banco de pruebas usa una fecha de referencia fija (jueves 27 de agosto de 2026,
 15:00) para que "mañana" o "el próximo martes" tengan siempre la misma respuesta
