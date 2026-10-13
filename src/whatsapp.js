@@ -69,7 +69,7 @@ const TIPOS_SIN_TEXTO = new Set([
  * que index.js conteste que no los entiende en vez de callarse. Los estados de
  * entrega no pasan por aqui: viajan en `statuses`, no en `messages`.
  *
- * Devuelve [{ id, de, nombre, tipo, texto }].
+ * Devuelve [{ id, de, nombre, tipo, texto, enviado }].
  */
 export function extraerMensajes(payload) {
   const mensajes = [];
@@ -86,6 +86,7 @@ export function extraerMensajes(payload) {
           id: m.id,
           de: m.from,
           nombre: contactos.get(m.from) ?? "",
+          enviado: cuandoSeEscribio(m.timestamp),
         };
 
         if (m.type === "text" && m.text?.body) {
@@ -106,6 +107,16 @@ export function extraerMensajes(payload) {
   }
 
   return mensajes;
+}
+
+// La hora en que la persona escribio, no la de llegada: tras una caida, Meta
+// entrega horas despues. Viene en segundos y como texto; si faltara o viniera
+// rota, se usa la de llegada, que es lo que se hacia antes de leerla.
+function cuandoSeEscribio(timestamp) {
+  const segundos = Number(timestamp);
+  return Number.isFinite(segundos) && segundos > 0
+    ? new Date(segundos * 1000)
+    : new Date();
 }
 
 /**

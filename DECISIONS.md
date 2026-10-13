@@ -608,3 +608,67 @@ argumento que hoy le ganaría a la aritmética.
 **Consecuencia aceptada.** Quien mande una nota de voz recibe un "solo leo texto" y tiene
 que escribirla. Es una fricción real y es la respuesta honesta: el bot dice lo que sabe
 hacer en vez de fingir que entendió.
+
+---
+
+## 2026-10-13 · El hosting de la 4b es Railway Hobby, no Azure
+
+**Contexto.** Con la luz verde del jefe (2026-10-12), antes de contratar se revisó si
+convenía usar la suscripción de Azure que la empresa ya paga. Se verificó con `az` y con
+la calculadora oficial de precios.
+
+**Decisión.** Railway Hobby: ~$7.70 USD al mes con el consumo del modelo, contra ~$16.35
+en Azure. Lo eligió el usuario, por precio.
+
+**Lo descartado.**
+- **Azure App Service B1 propio** (Linux, México Central, $13.65/mes). Funciona, pero
+  cuesta el doble, y el nivel Basic no admite reservas ni planes de ahorro: el reservado
+  más barato (P0v4 a tres años) sale en ~$22/mes, más que B1 sin reservar.
+- **Meterlo en el plan de App Service que ya existe** (`asp-controlobra-prod`). Parece
+  gratis, pero ese plan va al 68% de memoria en promedio y al 82% en picos, con CPU al
+  98%: compartirlo arriesga a la otra aplicación.
+- **Claude por Microsoft Foundry**, para que todo llegara en una sola factura. La
+  documentación deja a México fuera de los países donde se vende y el catálogo de
+  Marketplace dice lo contrario; no se confirmó, y además obligaba a cambiar el cliente
+  del extractor.
+- **Railway Pro** ($20/mes). Hobby no prohíbe el uso comercial y sobra para un bot de una
+  persona.
+
+**Cuándo se revisa.** Si la empresa exige pagarlo todo por Azure, o si el bot pasa a
+varias personas y Hobby se queda corto.
+
+---
+
+## 2026-10-13 · Duplicados por texto, fechas desde que se escribió, y el bot ya no arranca abierto
+
+**Qué pasó.** Tras la caída del Funnel del 2026-10-12, tres mensajes entraron dos veces
+con ids nuevos, la segunda copia ~50 min después de la primera, y una cita quedó doble en
+el calendario. Ya había pasado el 2026-09-22. Al usuario le pareció que "el bot le
+escribía solo". Además, un "mañana" escrito antes de la caída se leía desde la hora de
+llegada.
+
+**Decisión.**
+- Dedup por número y texto normalizado, con una ventana de dos horas medida por la hora
+  en que se escribió cada copia (el `timestamp` de Meta), no por la de llegada, que tras
+  una caída se separa mucho más. La copia no se contesta.
+- Solo aplica a lo que va al modelo y sin pregunta pendiente. Un "hola" repetido es
+  justo lo que manda quien quiere ver si el bot sigue vivo, y un mismo "a las 5" puede
+  contestar dos preguntas distintas.
+- El extractor recibe como "ahora" la hora en que se escribió el mensaje. La respuesta
+  y los avisos siguen con el reloj real, porque se leen y suenan ahora.
+- "Cancela…", "borra…" o "cambia…" al inicio se contesta en local: todavía no se puede,
+  se hace desde el iPhone. Solo el imperativo, porque "cancelar la tarjeta el lunes" sí
+  es una cita.
+
+**Consecuencia aceptada.** Quien mande a propósito el mismo texto dos veces en dos horas
+—por ejemplo, para volver a crear una cita que borró— no recibe respuesta la segunda vez.
+Es raro, y lo contrario, la cita doble, ya pasó dos veces.
+
+**Auditoría de seguridad antes del hosting.** Sin secretos en el repo ni en el historial,
+`npm audit` en cero y la firma HMAC se compara en tiempo constante. Se cerraron tres
+cosas: sin `WHATSAPP_APP_SECRET` o sin `WHATSAPP_ALLOWED_NUMBERS` el servidor ya no
+arranca (antes solo avisaba, y en un servidor rentado el aviso no lo lee nadie); el
+cuerpo del POST tiene un tope de 256 KB y un error al leerlo se atrapa en vez de quedar
+suelto; y un `\r` suelto en el texto se escapa en el .ics. Queda dicho, sin cambiarlo:
+el log guarda el número y los primeros 80 caracteres de cada mensaje, así que el log de
+Railway tendrá las citas del jefe.

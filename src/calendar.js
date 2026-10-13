@@ -169,7 +169,9 @@ function escapar(texto) {
     .replace(/\\/g, "\\\\")
     .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
-    .replace(/\r?\n/g, "\\n");
+    // Un \r suelto tambien parte la linea para algunos lectores de .ics, y
+    // con eso el texto del mensaje podria colar propiedades nuevas al evento.
+    .replace(/\r\n?|\n/g, "\\n");
 }
 
 // RFC 5545: ninguna linea pasa de 75 octetos. Las que se pasan se parten y la

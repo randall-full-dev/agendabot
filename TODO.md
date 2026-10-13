@@ -9,7 +9,7 @@
 | Bloqueos: qué espera a qué | El porqué de una decisión (→ `DECISIONS.md`) |
 | Preguntas abiertas que hay que resolver | Cómo está el código hoy (→ `README.md`) |
 
-Última revisión: **2026-09-24**
+Última revisión: **2026-10-13**
 
 ---
 
@@ -23,9 +23,6 @@ reinicio.
 
 ### 4b · Hosting de pago (cuando aprueben)
 
-- [ ] **Auditoría de seguridad antes de desplegar** al servidor rentado: revisar qué
-      queda expuesto, cómo viajan y se guardan las credenciales, y la validación de
-      firma del webhook, para no llevarse problemas al entorno de pago.
 - [ ] Contratar Railway Hobby ($5/mes). Alternativa: Render Starter ($7/mes).
 - [ ] Configurar las variables de entorno en producción.
 - [ ] Apuntar el webhook de Meta a la URL nueva y probar de punta a punta.
@@ -103,12 +100,6 @@ Antes de que esto deje de ser prueba, hay decisiones que son suyas, no técnicas
 - [ ] **Casos de prueba más difíciles.** El banco ya no distingue Sonnet de Opus. Los
       buenos salen de mensajes reales: así entró el caso 16, de una cita que se agendó
       con una semana de error (ver `DECISIONS.md`, 2026-09-22). Seguir sumándolos.
-
-- [ ] **Duplicados cuando el túnel se recupera.** El 2026-09-22 el mismo mensaje entró
-      dos veces, con identificadores distintos, y creó dos eventos idénticos. El dedup
-      va por id de mensaje y solo cubre los reintentos de Meta. La sospecha: Meta tenía
-      encolado el envío perdido mientras el túnel estaba caído y lo entregó junto con el
-      nuevo. Si se confirma, cada caída puede dejar eventos duplicados al recuperarse.
 
 ---
 

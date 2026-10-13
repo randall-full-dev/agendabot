@@ -76,7 +76,7 @@ que nunca hay que parsear texto libre ni reintentar por JSON mal formado.
 | `src/calendar.js` | JSON → evento CalDAV en `caldav.icloud.com`. No sabe de dónde salió el JSON. |
 | `src/agendar.js` | Conecta extractor + calendar por CLI: texto → evento, en un comando. |
 | `src/whatsapp.js` | El idioma de Meta: verificación del webhook, firma HMAC, extracción de mensajes, envío de respuestas. |
-| `src/index.js` | El servidor: webhook → extractor → calendar → respuesta. Dedup de reintentos, lista de números permitidos, regla de confianza, y cómo le habla el bot al usuario. |
+| `src/index.js` | El servidor: webhook → extractor → calendar → respuesta. Dedup de reintentos y de mensajes repetidos, lista de números permitidos, regla de confianza, y cómo le habla el bot al usuario. |
 | `test/casos.js` · `test/probar.js` | 16 mensajes de ejemplo con su resultado esperado, y el banco que los corre. |
 
 **Detalle de `calendar.js`:** las horas se escriben como hora de pared con zona
@@ -97,6 +97,17 @@ dice la fecha en palabras ("el jueves 24 de septiembre, a las 4:00 p.m.", y "hoy
 "mañana" cuando toca) y enumera los avisos que de verdad quedaron puestos, no una frase
 genérica. Cuando falta un dato, la pregunta la escribe el extractor en `notas` dirigida
 al usuario, y el bot la reenvía tal cual.
+
+**Mensajes atrasados y repetidos.** "Mañana" o "el viernes" se cuentan desde la hora en
+que se escribió el mensaje (el `timestamp` que manda Meta), no desde que llegó: tras una
+caída, Meta entrega horas después lo que tenía encolado. Si el mismo número manda el
+mismo texto con menos de dos horas de diferencia, medidas igual, la copia no se contesta:
+Meta reentrega con ids nuevos y el dedup por id no la ve. No aplica a saludos, a un "sí"
+ni cuando hay una pregunta pendiente.
+
+**Lo que no sabe hacer, lo dice.** Un "cancela…", "borra…" o "cambia…" al inicio del
+mensaje se contesta en local: todavía no puede, y se hace desde el iPhone. Así no llega
+al modelo como si fuera una cita nueva.
 
 Los saludos y agradecimientos exactos ("hola", "gracias", "¿qué tal?") se contestan en
 local, sin llamar al modelo: son gratis e instantáneos. La lista es de coincidencia
@@ -225,8 +236,9 @@ Sano: contesta con direcciones públicas del ingreso de Funnel (no `100.x`). Rot
 `"Status":3` (NXDOMAIN), aunque todo lo local diga que está bien. Es un problema conocido
 y sin arreglar de Tailscale (tailscale/tailscale #11849 y #20892); el ciclo de arriba lo
 corrige y el registro tarda hasta diez minutos en reaparecer. Al recuperarse, Meta
-entrega de golpe lo que tenía encolado —reintenta hasta siete días— y el bot lo procesa
-como si fuera nuevo. Abrir la URL pública en el celular con el WiFi apagado también
+entrega de golpe lo que tenía encolado —reintenta hasta siete días— y el bot lo procesa,
+con las fechas contadas desde que se escribió cada mensaje y sin contestar dos veces el
+mismo texto. Abrir la URL pública en el celular con el WiFi apagado también
 vale, pero es más lento y depende de la caché del teléfono. Un `curl` a la URL desde la
 misma máquina no vale, porque resuelve por la tailnet y nunca sale a internet.
 
@@ -259,12 +271,16 @@ ICLOUD_CALENDAR_NAME=         # vacío = calendario por defecto
 WHATSAPP_TOKEN=
 WHATSAPP_PHONE_ID=            # ID interno de Meta, NO el número telefónico
 WHATSAPP_VERIFY_TOKEN=        # lo inventas tú; igual aquí y en el panel de Meta
-WHATSAPP_APP_SECRET=          # firma cada webhook; descarta POST que no sean de Meta
-WHATSAPP_ALLOWED_NUMBERS=     # wa_id separados por coma; vacío = cualquiera
+WHATSAPP_APP_SECRET=          # obligatoria; firma cada webhook, descarta lo que no es de Meta
+WHATSAPP_ALLOWED_NUMBERS=     # obligatoria; wa_id separados por coma
 
 TZ=America/Mexico_City
 PORT=                         # 3100 en este equipo; default 3000 si se omite
 ```
+
+Sin `WHATSAPP_APP_SECRET` o sin `WHATSAPP_ALLOWED_NUMBERS` el servidor no arranca: son
+lo que impide que cualquiera use el bot, y un aviso en el log de un servidor rentado no
+lo lee nadie.
 
 Dos trampas: `APPLE_APP_PASSWORD` no es la contraseña del Apple ID (se genera en
 appleid.apple.com → Iniciar sesión y seguridad → Contraseñas específicas de app, con
