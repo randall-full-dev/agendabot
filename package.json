@@ -5,7 +5,7 @@
   "description": "Convierte mensajes de WhatsApp en texto libre en eventos de calendario",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "scripts": {
     "extraer": "node src/extractor.js",
